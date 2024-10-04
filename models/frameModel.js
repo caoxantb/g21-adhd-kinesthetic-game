@@ -1,16 +1,12 @@
 import mongoose from 'mongoose';
 
 const frameSchema = new mongoose.Schema({
-    _id: {
-        type: String,
-        required: true,
-        unique: true
-    },
     difficultyLevel: [{
         type: Number,
         ref: 'Level',
         required: true
     }],
+    // This is subject to change, so this is just a mock data model. 
     coordinates: {
         cameraX: {
             type: Number,

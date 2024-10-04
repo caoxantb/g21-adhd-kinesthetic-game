@@ -1,13 +1,8 @@
 import mongoose from 'mongoose';
 
 const gameplaySchema = new mongoose.Schema({
-    _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        auto: true
-    },
     player: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: true
     },
     level: {
@@ -37,10 +32,6 @@ const gameplaySchema = new mongoose.Schema({
         required: true,
         default: false
     },
-    timestamp: {
-        type: Date,
-        default: Date.now
-    }
 }, {
     timestamps: true
 });

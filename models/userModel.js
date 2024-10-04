@@ -1,11 +1,8 @@
 
 import mongoose from 'mongoose';
+import uniqueValidator from "mongoose-unique-validator";
 
 const userSchema = new mongoose.Schema({
-    _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        auto: true
-    },
     name: {
         type: String,
         required: true,
@@ -46,6 +43,14 @@ const userSchema = new mongoose.Schema({
     }
 }, {
     timestamps: true
+});
+
+// Add the unique validator plugin to the schema
+userSchema.plugin(uniqueValidator);
+userSchema.set("toJSON", {
+    transform: (document, returnedObject) => {
+        delete returnedObject.passwordHash;
+    },
 });
 
 const User = mongoose.model('User', userSchema);

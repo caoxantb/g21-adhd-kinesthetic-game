@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import uniqueValidator from "mongoose-unique-validator";
 
 const levelSchema = new mongoose.Schema({
     _id: {
@@ -40,6 +41,9 @@ const levelSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Add the unique validator plugin to the schema
+levelSchema.plugin(uniqueValidator);
 
 const Level = mongoose.model('Level', levelSchema);
 
