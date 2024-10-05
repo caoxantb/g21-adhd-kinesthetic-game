@@ -2,6 +2,9 @@ import express from "express";
 import "express-async-errors";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
+import { levelRouter, frameRouter } from "./routers/index.js";
+
 import { errorHandler } from "./middlewares/error.js";
 
 const app = express();
@@ -25,6 +28,8 @@ app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 
 // routes
+app.use("/api/v1/levels", levelRouter);
+app.use("/api/v1/frames", frameRouter);
 
 // error handler
 app.use(errorHandler);
