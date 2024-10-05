@@ -4,8 +4,6 @@ import uniqueValidator from "mongoose-unique-validator";
 const levelSchema = new mongoose.Schema({
     _id: {
         type: Number,
-        required: true,
-        unique: true,
         min: 1,
     },
     name: {
