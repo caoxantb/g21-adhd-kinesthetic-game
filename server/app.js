@@ -3,8 +3,9 @@ import "express-async-errors";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import { levelRouter, frameRouter } from "./routers/index.js";
+import { levelRouter, frameRouter, userRouter } from "./routers/index.js";
 
+import { authenticateUser } from "./middlewares/auth.js";
 import { errorHandler } from "./middlewares/error.js";
 
 const app = express();
@@ -24,12 +25,14 @@ app.set("cookieSecret", cookieSecret);
 
 // middlewares
 app.use(cookieParser(cookieSecret, cookieOptions));
+app.use(authenticateUser);
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 
 // routes
 app.use("/api/v1/levels", levelRouter);
 app.use("/api/v1/frames", frameRouter);
+app.use("/api/v1/users", userRouter);
 
 // error handler
 app.use(errorHandler);
