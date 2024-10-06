@@ -3,7 +3,7 @@ import "express-async-errors";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import { userRouter } from "./routers/index.js";
+import { levelRouter, frameRouter, userRouter } from "./routers/index.js";
 
 import { authenticateUser } from "./middlewares/auth.js";
 import { errorHandler } from "./middlewares/error.js";
@@ -29,7 +29,9 @@ app.use(authenticateUser);
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 
-// routers
+// routes
+app.use("/api/v1/levels", levelRouter);
+app.use("/api/v1/frames", frameRouter);
 app.use("/api/v1/users", userRouter);
 
 // error handler
