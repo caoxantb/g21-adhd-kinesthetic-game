@@ -3,7 +3,7 @@ import "express-async-errors";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import { levelRouter, frameRouter, userRouter } from "./routers/index.js";
+import { levelRouter, frameRouter, userRouter, gameplayRouter } from "./routers/index.js";
 
 import { authenticateUser } from "./middlewares/auth.js";
 import { errorHandler } from "./middlewares/error.js";
@@ -33,6 +33,7 @@ app.use(express.json());
 app.use("/api/v1/levels", levelRouter);
 app.use("/api/v1/frames", frameRouter);
 app.use("/api/v1/users", userRouter);
+app.use('/api/v1/gameplays', gameplayRouter);
 
 // error handler
 app.use(errorHandler);
