@@ -1,5 +1,9 @@
 import express from "express";
-import { getAllFrames, getFrameById, getAllFramesForLevel } from "../controllers/frameController.js";
+import {
+  getAllFrames,
+  getFrameById,
+  getAllFramesForLevel,
+} from "../controllers/frameController.js";
 
 const frameRouter = new express.Router();
 

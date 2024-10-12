@@ -9,11 +9,11 @@ const initServer = async () => {
   const server = http.createServer(app);
   const PORT = process.env.PORT || 8080;
 
-  await connectDatabase()
+  await connectDatabase();
 
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-}
+};
 
 initServer();
