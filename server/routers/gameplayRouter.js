@@ -1,18 +1,23 @@
-import express from 'express';
-import { saveGameplay, getGameplayById, getGameplaysByPlayer, getGameplaysByLevel } from '../controllers/gameplayController.js';
+import express from "express";
+import {
+  saveGameplay,
+  getGameplayById,
+  getGameplaysByPlayer,
+  getGameplaysByLevel,
+} from "../controllers/gameplayController.js";
 
 const router = express.Router();
 
 // POST to save gameplay
-router.post('/', saveGameplay);
+router.post("/", saveGameplay);
 
 // GET gameplay by ID
-router.get('/:id', getGameplayById);
+router.get("/:id", getGameplayById);
 
 // GET all gameplays by player
-router.get('/player/:player', getGameplaysByPlayer);
+router.get("/player/:username", getGameplaysByPlayer);
 
 // GET all gameplays by level
-router.get('/level/:levelId', getGameplaysByLevel);
+router.get("/level/:levelId", getGameplaysByLevel);
 
 export default router;
