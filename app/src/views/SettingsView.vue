@@ -1,11 +1,31 @@
 <script setup>
 import MainLayout from "@/layouts/MainLayout.vue";
 import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 
+
+const router = useRouter();
 const kinectAddress = ref("");
+const isDisabled = ref(true);
 
 // 0 not connected, 1 is connected
 const configured = ref(0);
+
+const connectKinect = () => {
+  if (kinectAddress.value === "123") {
+    configured.value = 1;
+    isDisabled.value = false;
+  }
+  else {
+    configured.value = 0;
+    isDisabled.value = true;
+  }
+};
+
+const close = () => {
+  router.push("home");
+};
+
 
 </script>
 
@@ -19,12 +39,12 @@ const configured = ref(0);
         </div>
         <div class="input-box">
           <el-input placeholder="Enter kinect IP address" class="configure-input" v-model="kinectAddress" />
-          <el-button class="configure-button">Configure</el-button>
+          <el-button class="configure-button" @click="connectKinect">Configure</el-button>
         </div>
         <div class="buttons-box">
-          <el-button class="play-button">Single Player</el-button>
-          <el-button class="play-button">Multiplayer</el-button>
-          <el-button class="back-button">Close</el-button>
+          <el-button class="play-button" v-bind:disabled="isDisabled">Single Player</el-button>
+          <el-button class="play-button" v-bind:disabled="isDisabled">Multiplayer</el-button>
+          <el-button class="back-button" @click="close">Close</el-button>
         </div>
       </div>
     </div>
@@ -40,6 +60,7 @@ const configured = ref(0);
 
 .container {
   height: 100%;
+  min-height: 800px;
   display: flex;
   justify-content: center;
 }
@@ -59,7 +80,7 @@ const configured = ref(0);
   display: flex;
   flex-direction: row;
   justify-content: center;
-  margin-bottom: 50px;
+  margin-bottom: 40px;
 }
 
 .configure-input {
@@ -84,12 +105,24 @@ const configured = ref(0);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  margin-bottom: 50px;
 }
 
 .play-button {
-  height: 80px !important;
+  height: 95px !important;
   margin-bottom: 20px;
-  width: 400px;
+  width: 350px;
+  --el-border-radius-base: 20px;
+  --el-font-size-base: 30px;
+  --el-button-bg-color: var(--color-red);
+  --el-button-hover-bg-color: var(--color-light-red);
+  color: var(--color-white);
+}
+
+.play-button.is-disabled, .play-button.is-disabled:hover {
+  background-color: var(--color-red);
+  opacity: 0.7;
+  color: var(--color-white);
 }
 
 .back-button {
@@ -100,5 +133,7 @@ const configured = ref(0);
 .el-button+.el-button {
   margin-left: 0px;
 }
+
+
 
 </style>
