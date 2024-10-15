@@ -17,7 +17,7 @@ const levelSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    defaultTime: {
+    timeLimit: {
       type: Number,
       required: true,
       min: 0,

@@ -1,0 +1,29 @@
+[
+  {
+    "_id": 1,
+    "name": "Level 1",
+    "theme": "jungle",
+    "timeLimit": 180,
+    "maximumScore": 100,
+    "numberOfMovements": 10,
+    "numberOfFreezes": 5
+  },
+  {
+    "_id": 2,
+    "name": "Level 2",
+    "theme": "aquarium",
+    "timeLimit": 180,
+    "maximumScore": 150,
+    "numberOfMovements": 10,
+    "numberOfFreezes": 10
+  },
+  {
+    "_id": 3,
+    "name": "Level 3",
+    "theme": "space",
+    "timeLimit": 150,
+    "maximumScore": 200,
+    "numberOfMovements": 10,
+    "numberOfFreezes": 10
+  }
+]

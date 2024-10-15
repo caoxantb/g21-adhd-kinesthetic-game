@@ -33,12 +33,16 @@ const userSchema = new mongoose.Schema(
     },
     currentLevel: {
       type: Number,
-      default: 1,
+      default: function () {
+        return this.role === "player" ? 1 : null;
+      },
       min: 1,
     },
     totalScore: {
       type: Number,
-      default: 0,
+      default: function () {
+        return this.role === "player" ? 0 : null;
+      },
       min: 0,
     },
   },
