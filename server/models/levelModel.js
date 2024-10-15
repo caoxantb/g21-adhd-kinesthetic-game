@@ -1,48 +1,51 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 import uniqueValidator from "mongoose-unique-validator";
 
-const levelSchema = new mongoose.Schema({
+const levelSchema = new mongoose.Schema(
+  {
     _id: {
-        type: Number,
-        min: 1,
+      type: Number,
+      min: 1,
     },
     name: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     theme: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
-    defaultTime: {
-        type: Number,
-        required: true,
-        min: 0
+    timeLimit: {
+      type: Number,
+      required: true,
+      min: 0,
     },
     maximumScore: {
-        type: Number,
-        required: true,
-        min: 0
+      type: Number,
+      required: true,
+      min: 0,
     },
     numberOfMovements: {
-        type: Number,
-        required: true,
-        min: 0
+      type: Number,
+      required: true,
+      min: 0,
     },
     numberOfFreezes: {
-        type: Number,
-        required: true,
-        min: 0
-    }
-}, {
-    timestamps: true
-});
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 // Add the unique validator plugin to the schema
 levelSchema.plugin(uniqueValidator);
 
-const Level = mongoose.model('Level', levelSchema);
+const Level = mongoose.model("Level", levelSchema);
 
 export default Level;

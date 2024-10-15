@@ -1,0 +1,43 @@
+[
+  {
+    "name": "Xuan An Cao",
+    "username": "caoxantb",
+    "password": "caoxantb-password",
+    "role": "admin"
+  },
+  {
+    "name": "Dale Cooper",
+    "username": "special_fbi_agent_dale_cooper",
+    "password": "damngoodcoffee",
+    "role": "player",
+    "age": 15
+  },
+  {
+    "name": "Laura Palmer",
+    "username": "homecoming_queen",
+    "password": "whokilledme?",
+    "role": "player",
+    "age": 8
+  },
+  {
+    "name": "Douglas Jones",
+    "username": "dougieee",
+    "password": "jadegavetworides",
+    "role": "player",
+    "age": 6
+  },
+  {
+    "name": "David Lynch",
+    "username": "monica_belucci_dreamer",
+    "password": "everybodyhaveagreatday!",
+    "role": "player",
+    "age": 5
+  },
+  {
+    "name": "One Armed Man",
+    "username": "i_am_the_arm",
+    "password": "firewalkwithme",
+    "role": "player",
+    "age": 10
+  }
+]

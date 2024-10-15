@@ -25,7 +25,7 @@ export const userLogin = async (req, res) => {
 
 export const userRegister = async (req, res) => {
   const saltRounds = 10;
-  const { username, name, role, password } = req.body;
+  const { username, name, role, password, age } = req.body;
 
   if (!username || !name || !password)
     throw new BadRequest("Missing required fields");
@@ -33,13 +33,14 @@ export const userRegister = async (req, res) => {
   const user = await User.findOne({ username });
 
   if (user) throw new BadRequest("User already exists");
-  if (!password || password.length <= 8)
+  if (password.length <= 8)
     throw new BadRequest("Password must be at least 8 characters");
 
   const passwordHash = await bcrypt.hash(password, saltRounds);
   const newUser = new User({
     username,
     name,
+    age,
     ...(role && { role }),
     passwordHash,
   });
