@@ -3,7 +3,6 @@ import MainLayout from "@/layouts/MainLayout.vue";
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 
-
 const router = useRouter();
 const kinectAddress = ref("");
 const isDisabled = ref(true);
@@ -11,15 +10,23 @@ const isDisabled = ref(true);
 // 0 not connected, 1 is connected
 const configured = ref(0);
 
+let kinectron = null;
+
 const connectKinect = () => {
-  if (kinectAddress.value === "123") {
+
+  try {
+    kinectron = Kinectron(kinectAddress);
+    kinectron.setKinectType("windows");
+    kinectron.makeConnection();
     configured.value = 1;
     isDisabled.value = false;
   }
-  else {
+  catch (e) {
+    console.log("Could not connect to kinect", e);
     configured.value = 0;
     isDisabled.value = true;
   }
+
 };
 
 const close = () => {
@@ -28,6 +35,7 @@ const close = () => {
 
 
 </script>
+
 
 <template>
   <MainLayout>
@@ -60,7 +68,7 @@ const close = () => {
 
 .container {
   height: 100%;
-  min-height: 800px;
+  min-height: 80%;
   display: flex;
   justify-content: center;
 }
