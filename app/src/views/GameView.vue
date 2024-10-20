@@ -1,161 +1,105 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onUnmounted } from 'vue';
 import * as THREE from "three";
-// import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
-import kinectWebm from "@/assets/kinect.webm";
-import kinectMp4 from "@/assets/kinect.mp4";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import dancing from '@/assets/game/animations/Dancing.fbx'
+import hiphop from '@/assets/game/animations/Hip Hop Dancing.fbx'
+import snatch from '@/assets/game/animations/Snatch.fbx'
+import xbot from '@/assets/game/X Bot.fbx'
+import texture from '@/assets/game/fire-edge-blue.jpg'
 
-const main = ref(null);
-let scene, camera, renderer;
-let geometry, mesh, material;
-let mouse, center;
 
-const init = () => {
-  camera = new THREE.PerspectiveCamera(
-    50,
-    window.innerWidth / window.innerHeight,
-    1,
-    10000
-  );
-  camera.position.set(0, 0, 500);
+
+const canvasRef = ref(null);
+
+let scene, camera, renderer, controls, character, actions, previousAction;
+onMounted(() => {
+  initThreeJS();
+  loadCharacter();
+  animate();
+  window.addEventListener("resize", handleWindowResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleWindowResize);
+});
+
+function initThreeJS() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  
   scene = new THREE.Scene();
-  center = new THREE.Vector3();
-  center.z = -1000;
-
-  const video = document.getElementById("video");
-  const texture = new THREE.VideoTexture(video);
-  texture.minFilter = THREE.NearestFilter;
-
-  const width = 640,
-    height = 480;
-  const nearClipping = 850,
-    farClipping = 4000;
-
-  geometry = new THREE.BufferGeometry();
-  const vertices = new Float32Array(width * height * 3);
-  for (let i = 0, j = 0, l = vertices.length; i < l; i += 3, j++) {
-    vertices[i] = j % width;
-    vertices[i + 1] = Math.floor(j / width);
-  }
-  geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
-
-  material = new THREE.ShaderMaterial({
-    uniforms: {
-      map: { value: texture },
-      width: { value: width },
-      height: { value: height },
-      nearClipping: { value: nearClipping },
-      farClipping: { value: farClipping },
-      pointSize: { value: 2 },
-      zOffset: { value: 1000 },
-    },
-    vertexShader: `
-        uniform sampler2D map;
-        uniform float width;
-        uniform float height;
-        uniform float nearClipping, farClipping;
-        uniform float pointSize;
-        uniform float zOffset;
-        varying vec2 vUv;
+  camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+  camera.position.z = 7;
   
-        const float XtoZ = 1.11146; 
-        const float YtoZ = 0.83359; 
+  renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvasRef.value });
+  renderer.setSize(w, h);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   
-        void main() {
-          vUv = vec2(position.x / width, position.y / height);
-          vec4 color = texture2D(map, vUv);
-          float depth = (color.r + color.g + color.b) / 3.0;
-          float z = (1.0 - depth) * (farClipping - nearClipping) + nearClipping;
-          vec4 pos = vec4((position.x / width - 0.5) * z * XtoZ, (position.y / height - 0.5) * z * YtoZ, -z + zOffset, 1.0);
-          gl_PointSize = pointSize;
-          gl_Position = projectionMatrix * modelViewMatrix * pos;
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = false;
+  controls.dampingFactor = 0.05;
+
+  // Add a simple light
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(1, 1, 1);
+  scene.add(light);
+
+  // Add ambient light
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  scene.add(ambientLight);
+
+  // Add a simple floor
+  const floorGeometry = new THREE.PlaneGeometry(10, 10);
+  const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+  const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+  floorMesh.rotation.x = -Math.PI / 2;
+  floorMesh.position.y = -1.5;
+  scene.add(floorMesh);
+}
+
+function loadCharacter() {
+  const loader = new FBXLoader();
+  const textureLoader = new THREE.TextureLoader();
+
+  loader.load(xbot, (fbx) => {
+    character = fbx;
+    character.scale.setScalar(0.02);
+    character.position.set(0, -1.5, 0);
+    character.traverse((c) => {
+      if (c.isMesh) {
+        if (c.material.name === "Alpha_Body_MAT") {
+          c.material = new THREE.MeshMatcapMaterial({
+            matcap: textureLoader.load(texture),
+          });
         }
-      `,
-    fragmentShader: `
-        uniform sampler2D map;
-        varying vec2 vUv;
-  
-        void main() {
-          vec4 color = texture2D(map, vUv);
-          gl_FragColor = vec4(color.r, color.g, color.b, 0.2);
-        }
-      `,
-    blending: THREE.AdditiveBlending,
-    depthTest: false,
-    depthWrite: false,
-    transparent: true,
+        c.castShadow = true;
+      }
+    });
+    scene.add(character);
   });
+}
 
-  mesh = new THREE.Points(geometry, material);
-  scene.add(mesh);
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+  controls.update();
+}
 
-//   const gui = new GUI();
-//   gui
-//     .add(material.uniforms.nearClipping, "value", 1, 10000, 1.0)
-//     .name("nearClipping");
-//   gui
-//     .add(material.uniforms.farClipping, "value", 1, 10000, 1.0)
-//     .name("farClipping");
-//   gui.add(material.uniforms.pointSize, "value", 1, 10, 1.0).name("pointSize");
-//   gui.add(material.uniforms.zOffset, "value", 0, 4000, 1.0).name("zOffset");
-
-  video.play();
-
-  renderer = new THREE.WebGLRenderer();
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setAnimationLoop(animate);
-  main.value.appendChild(renderer.domElement);
-
-  mouse = new THREE.Vector3(0, 0, 1);
-  document.addEventListener("mousemove", onDocumentMouseMove);
-  window.addEventListener("resize", onWindowResize);
-};
-
-const onWindowResize = () => {
+function handleWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-};
-
-const onDocumentMouseMove = (event) => {
-  mouse.x = (event.clientX - window.innerWidth / 2) * 8;
-  mouse.y = (event.clientY - window.innerHeight / 2) * 8;
-};
-
-const animate = () => {
-  camera.position.x += (mouse.x - camera.position.x) * 0.05;
-  camera.position.y += (-mouse.y - camera.position.y) * 0.05;
-  camera.lookAt(center);
-  renderer.render(scene, camera);
-};
-
-onBeforeUnmount(() => {
-  document.removeEventListener("mousemove", onDocumentMouseMove);
-  window.removeEventListener("resize", onWindowResize);
-});
-
-onMounted(() => {
-  init();
-});
+}
 </script>
 
 <template>
   <div class="container">
-    <div ref="main" class="main">
+    <canvas ref="canvasRef" class="main">
       <!-- <div>Game Begins</div> -->
-    </div>
-    <video
-      id="video"
-      loop
-      muted
-      crossOrigin="anonymous"
-      playsinline
-      style="display: none"
-    >
-      <source :src="kinectWebm" />
-      <source :src="kinectMp4" />
-    </video>
+    </canvas>
   </div>
 </template>
 

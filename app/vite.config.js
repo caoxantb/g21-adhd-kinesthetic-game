@@ -18,7 +18,7 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
   ],
-  assetsInclude: ["**/*.glb"],
+  assetsInclude: ["**/*.glb", "**/*.fbx"],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
