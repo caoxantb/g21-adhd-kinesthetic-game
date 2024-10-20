@@ -37,6 +37,7 @@ function logout() {
   justify-content: space-between;
   margin-bottom: 10px;
   align-items: center;
+  padding-left: 40px;
 }
 
 .logo {
