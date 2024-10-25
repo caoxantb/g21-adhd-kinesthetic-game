@@ -1,6 +1,6 @@
 <script setup>
 import MainLayout from "@/layouts/MainLayout.vue";
-import { reactive, ref } from "vue";
+import { watch, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -10,7 +10,42 @@ const isDisabled = ref(true);
 // 0 not connected, 1 is connected
 const configured = ref(0);
 
+const divWidth = ref(0);
+const divHeight = ref(0);
+const skeleton = ref(null);
+
+watch(skeleton, (newSkeleton) => {
+  if(newSkeleton) {
+    divWidth.value = newSkeleton.offsetWidth;
+    divHeight.value = newSkeleton.offsetHeight;
+  }
+})
+
 let kinectron = null;
+const s = ( sketch ) => {
+
+  let x = 100;
+  let y = 100;
+
+  sketch.setup = () => {
+    sketch.createCanvas(200, 200);
+  };
+
+  sketch.draw = () => {
+    sketch.background(0);
+    sketch.fill(255);
+    sketch.rect(x,y,50,50);
+  };
+
+  sketch.windowResized = () => {
+    divWidth.value = skeleton.value.offsetWidth;
+    divHeight.value = skeleton.value.offsetHeight;
+    sketch.resizeCanvas(divWidth.value - 100, divHeight.value - 50);
+  }
+
+};
+
+let myp5 = new p5(s, "skeleton");
 
 const connectKinect = () => {
 
@@ -33,26 +68,29 @@ const close = () => {
   router.push("home");
 };
 
-
 </script>
 
 
 <template>
   <MainLayout>
     <div class="container">
-      <div class="main">
+      <div class="left">
+        <el-link :underline="false" class="back-button" @click="close">🡐 Back</el-link>
+        <div class="buttons-box">
+          <el-button class="play-button" v-bind:disabled="isDisabled">Single Player</el-button>
+          <el-button class="play-button" v-bind:disabled="isDisabled">Multiplayer</el-button>
+        </div>
+      </div>
+      <div class="right">
         <div class="text-box">
           <el-text v-if="configured == 0">Kinect device not connected</el-text>
           <el-text v-else>Kinect device connected</el-text>
         </div>
         <div class="input-box">
           <el-input placeholder="Enter kinect IP address" class="configure-input" v-model="kinectAddress" />
-          <el-button class="configure-button" @click="connectKinect">Configure</el-button>
+          <el-button class="configure-button" @click="connectKinect">Connect</el-button>
         </div>
-        <div class="buttons-box">
-          <el-button class="play-button" v-bind:disabled="isDisabled">Single Player</el-button>
-          <el-button class="play-button" v-bind:disabled="isDisabled">Multiplayer</el-button>
-          <el-button class="back-button" @click="close">Close</el-button>
+        <div v-if="configured" id="skeleton" ref="skeleton">
         </div>
       </div>
     </div>
@@ -62,21 +100,38 @@ const close = () => {
 <style scoped>
 
 .el-text {
-  font-size: 25px;
+  font-size: 20px;
   margin-bottom: 5px;
+  color: var(--color-white)
 }
 
 .container {
   height: 100%;
   min-height: 80%;
   display: flex;
-  justify-content: center;
 }
 
-.main {
+.left {
+  width: 52%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  position: relative;
+  padding: 30px;
+  background: #fbfbfb;
+}
+
+.right {
+  width: 48%;
+  height: 100%;
+  background: var(--color-primary);
   display: flex;
   flex-direction: column;
   justify-content: center;
+  color: var(--color-white);
+  padding-bottom: 30px;
 }
 
 .text-box {
@@ -92,12 +147,12 @@ const close = () => {
 }
 
 .configure-input {
-  --el-border-radius-base: 0px;
+  --el-border-radius-base: 3px;
   --el-input-bg-color: rgb(238, 238, 238);
   --el-input-focus-border-color: none;
   --text-color-tertiary: var(--color-black);
   font-size: 16px;
-  width: 200px;
+  width: 45%;
 }
 
 .configure-button {
@@ -112,7 +167,6 @@ const close = () => {
 .buttons-box {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   margin-bottom: 50px;
 }
 
@@ -134,13 +188,25 @@ const close = () => {
 }
 
 .back-button {
-  height: 40px !important;
-  width: 100px;
+  --el-link-font-size: 30px;
+  --el-link-text-color: var(--color-black);
+  position: absolute;
+  left: 35px;
+  top: 25px;
 }
 
 .el-button+.el-button {
   margin-left: 0px;
 }
+
+#skeleton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+  height: 70%;
+}
+
 
 
 
