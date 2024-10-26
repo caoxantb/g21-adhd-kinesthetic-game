@@ -2,7 +2,6 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import jump from '@/assets/game/animations/Jumping.fbx'
 import dodge from '@/assets/game/animations/Dodging Right.fbx'
@@ -10,11 +9,9 @@ import idle from '@/assets/game/animations/Idle.fbx'
 import xbot from '@/assets/game/X Bot.fbx'
 import texture from '@/assets/game/fire-edge-blue.jpg'
 
-
-
 const canvasRef = ref(null);
 
-let scene, camera, renderer, controls, character, mixer, activeAction;
+let scene, camera, renderer, character, mixer, activeAction;
 let actions = {}
 
 onMounted(() => {
@@ -31,23 +28,18 @@ onUnmounted(() => {
 });
 
 function initThreeJS() {
-  const w = window.innerWidth - 300;
+  const w = window.innerWidth;
   const h = window.innerHeight;
   
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(60, w / h, 0.5, 200);
-  camera.position.x = 0
-  camera.position.y = 4
-  camera.position.z = -6
+  camera.position.set(0, 4, -6); // Position
+  camera.lookAt(0, 0, -1); // Look at point
   
   renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvasRef.value });
   renderer.setSize(w, h);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = false;
-  controls.dampingFactor = 0.05;
 
   addPlane()
   addLights()
@@ -79,7 +71,7 @@ function loadCharacter() {
       actions.idle.play(); // Play idle animation by default
       activeAction = actions.idle; // Set idle as the active action
     });
-    scene.add(character);
+    
 
     loader.load(jump, (animFbx) => {
       const anim = animFbx.animations[0];
@@ -91,12 +83,14 @@ function loadCharacter() {
       actions.dodge = mixer.clipAction(anim);
     });
 
+    scene.add(character);
+
   });
 }
 
 function addPlane() {
   const width = 10; // Width of the plane
-  const length = 10000; // Length of the plane (long enough to simulate an infinite ramp)
+  const length = 10000; // Length of the plane 
   const geometry = new THREE.PlaneGeometry(width, length);
   const material = new THREE.MeshStandardMaterial({ color: 0x001020 });
   
@@ -121,11 +115,10 @@ function animate() {
     mixer.update(0.016); // Update animations (assuming 60fps)
   }
   renderer.render(scene, camera);
-  controls.update();
 }
 
 function handleWindowResize() {
-  camera.aspect = window.innerWidth - 300 / window.innerHeight;
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
@@ -166,7 +159,7 @@ function handleKeyDown(e) {
 
         // Set the action to play once
         actions.dodge.reset().setLoop(THREE.LoopOnce, 1); 
-        actions.dodge.clampWhenFinished = true; // Ensure it holds the last frame
+        actions.dodge.clampWhenFinished = true; // holds the last frame
         actions.dodge.play();
 
         // Listen for when the action finishes and stop it
