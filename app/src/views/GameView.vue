@@ -3,9 +3,10 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import dancing from '@/assets/game/animations/Dancing.fbx'
-import hiphop from '@/assets/game/animations/Hip Hop Dancing.fbx'
-import snatch from '@/assets/game/animations/Snatch.fbx'
+
+import jump from '@/assets/game/animations/Jumping.fbx'
+import dodge from '@/assets/game/animations/Dodging Right.fbx'
+import idle from '@/assets/game/animations/Idle.fbx'
 import xbot from '@/assets/game/X Bot.fbx'
 import texture from '@/assets/game/fire-edge-blue.jpg'
 
@@ -13,25 +14,31 @@ import texture from '@/assets/game/fire-edge-blue.jpg'
 
 const canvasRef = ref(null);
 
-let scene, camera, renderer, controls, character, actions, previousAction;
+let scene, camera, renderer, controls, character, mixer, activeAction;
+let actions = {}
+
 onMounted(() => {
   initThreeJS();
   loadCharacter();
   animate();
   window.addEventListener("resize", handleWindowResize);
+  window.addEventListener("keydown", handleKeyDown);
 });
 
 onUnmounted(() => {
   window.removeEventListener("resize", handleWindowResize);
+  window.removeEventListener("keydown", handleKeyDown);
 });
 
 function initThreeJS() {
-  const w = window.innerWidth;
+  const w = window.innerWidth - 300;
   const h = window.innerHeight;
   
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
-  camera.position.z = 7;
+  camera = new THREE.PerspectiveCamera(60, w / h, 0.5, 200);
+  camera.position.x = 0
+  camera.position.y = 4
+  camera.position.z = -6
   
   renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvasRef.value });
   renderer.setSize(w, h);
@@ -42,22 +49,8 @@ function initThreeJS() {
   controls.enableDamping = false;
   controls.dampingFactor = 0.05;
 
-  // Add a simple light
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(1, 1, 1);
-  scene.add(light);
-
-  // Add ambient light
-  const ambientLight = new THREE.AmbientLight(0x404040);
-  scene.add(ambientLight);
-
-  // Add a simple floor
-  const floorGeometry = new THREE.PlaneGeometry(10, 10);
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
-  const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
-  floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.position.y = -1.5;
-  scene.add(floorMesh);
+  addPlane()
+  addLights()
 }
 
 function loadCharacter() {
@@ -67,31 +60,127 @@ function loadCharacter() {
   loader.load(xbot, (fbx) => {
     character = fbx;
     character.scale.setScalar(0.02);
-    character.position.set(0, -1.5, 0);
+    character.position.set(0, -1.5, -2);
     character.traverse((c) => {
       if (c.isMesh) {
-        if (c.material.name === "Alpha_Body_MAT") {
-          c.material = new THREE.MeshMatcapMaterial({
-            matcap: textureLoader.load(texture),
-          });
-        }
+        c.material = new THREE.MeshMatcapMaterial({
+          matcap: textureLoader.load(texture),
+        });
         c.castShadow = true;
       }
     });
+    
+    // Set up animation mixer
+    mixer = new THREE.AnimationMixer(character);
+
+    loader.load(idle, (animFbx) => {
+      const anim = animFbx.animations[0];
+      actions.idle= mixer.clipAction(anim)
+      actions.idle.play(); // Play idle animation by default
+      activeAction = actions.idle; // Set idle as the active action
+    });
     scene.add(character);
+
+    loader.load(jump, (animFbx) => {
+      const anim = animFbx.animations[0];
+      actions.jump = mixer.clipAction(anim);
+    });
+
+    loader.load(dodge, (animFbx) => {
+      const anim = animFbx.animations[0];
+      actions.dodge = mixer.clipAction(anim);
+    });
+
   });
+}
+
+function addPlane() {
+  const width = 10; // Width of the plane
+  const length = 10000; // Length of the plane (long enough to simulate an infinite ramp)
+  const geometry = new THREE.PlaneGeometry(width, length);
+  const material = new THREE.MeshStandardMaterial({ color: 0x001020 });
+  
+  const plane = new THREE.Mesh(geometry, material);
+  plane.rotation.x = Math.PI * -0.5; // Rotate the plane to lie flat (facing upwards)
+  plane.receiveShadow = true;
+  plane.position.y = -1.5; // Adjust position if needed
+  
+  scene.add(plane);
+}
+
+function addLights() {
+  const sunLight = new THREE.DirectionalLight(0xffffff, 10);
+  sunLight.position.set(2, 4, 3);
+  sunLight.castShadow = true;
+  scene.add(sunLight);
 }
 
 function animate() {
   requestAnimationFrame(animate);
+  if (mixer) {
+    mixer.update(0.016); // Update animations (assuming 60fps)
+  }
   renderer.render(scene, camera);
   controls.update();
 }
 
 function handleWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = window.innerWidth - 300 / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function handleKeyDown(e) {
+  if (e.key === 'ArrowUp') {
+    if (actions && actions.jump) {
+      if (activeAction !== actions.jump) {
+        // Stop any currently playing action
+        if (activeAction) {
+          activeAction.stop();
+        }
+
+        // Set the action to play once
+        actions.jump.reset().setLoop(THREE.LoopOnce, 1); 
+        actions.jump.clampWhenFinished = true; // Ensure it holds the last frame
+        actions.jump.play();
+
+        // Listen for when the action finishes and stop it
+        mixer.addEventListener('finished', () => {
+          if (activeAction === actions.jump) {
+            // After jump finishes, go back to idle
+            actions.idle.reset().play();
+            activeAction = actions.idle;
+          }
+        });
+        activeAction = actions.jump; // Set active action
+      }    
+    }
+  }
+  if (e.key === 'ArrowDown') {
+    if (actions && actions.dodge) {
+      if (activeAction !== actions.dodge) {
+        // Stop any currently playing action
+        if (activeAction) {
+          activeAction.stop();
+        }
+
+        // Set the action to play once
+        actions.dodge.reset().setLoop(THREE.LoopOnce, 1); 
+        actions.dodge.clampWhenFinished = true; // Ensure it holds the last frame
+        actions.dodge.play();
+
+        // Listen for when the action finishes and stop it
+        mixer.addEventListener('finished', () => {
+          if (activeAction === actions.dodge) {
+            // After dodge finishes, go back to idle
+            actions.idle.reset().play();
+            activeAction = actions.idle;
+          }
+        });
+        activeAction = actions.dodge; // Set active action
+      }    
+    }
+  }
 }
 </script>
 
@@ -106,17 +195,11 @@ function handleWindowResize() {
 <style scoped>
 .container {
   height: 100%;
-  padding: 25px;
 }
 
 .main {
-  border-radius: 50px;
   background-color: var(--color-white);
   overflow: hidden;
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100%;
   font-size: 64px;
 }
