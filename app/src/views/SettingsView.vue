@@ -1,18 +1,20 @@
 <script setup>
 import MainLayout from "@/layouts/MainLayout.vue";
-import { watch, ref } from "vue";
+import { watch, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 const kinectAddress = ref("");
-const isDisabled = ref(true);
 
 // 0 not connected, 1 is connected
 const configured = ref(0);
 
+// For resizing the canvas according to the parent div.
 const divWidth = ref(0);
 const divHeight = ref(0);
 const skeleton = ref(null);
+
+let kinectron = null;
 
 watch(skeleton, (newSkeleton) => {
   if(newSkeleton) {
@@ -21,45 +23,56 @@ watch(skeleton, (newSkeleton) => {
   }
 })
 
-let kinectron = null;
-const s = ( sketch ) => {
+// For setting up the canvas.
+const s = (sketch) => {
 
   let x = 100;
   let y = 100;
 
   sketch.setup = () => {
-    sketch.createCanvas(200, 200);
+    sketch.createCanvas(400, 600);
   };
 
+  // Here you can draw the body.
   sketch.draw = () => {
-    sketch.background(0);
-    sketch.fill(255);
-    sketch.rect(x,y,50,50);
+    sketch.background(255);
   };
 
   sketch.windowResized = () => {
-    divWidth.value = skeleton.value.offsetWidth;
-    divHeight.value = skeleton.value.offsetHeight;
-    sketch.resizeCanvas(divWidth.value - 100, divHeight.value - 50);
+    try {
+      divWidth.value = skeleton.value.offsetWidth;
+      divHeight.value = skeleton.value.offsetHeight;
+      sketch.resizeCanvas(divWidth.value, divHeight.value);
+    }
+    catch (e) {
+      console.log("Not configured", e);
+    }
+
   }
 
 };
 
-let myp5 = new p5(s, "skeleton");
+new p5(s, "skeleton");
+
 
 const connectKinect = () => {
 
-  try {
-    kinectron = Kinectron(kinectAddress);
-    kinectron.setKinectType("windows");
-    kinectron.makeConnection();
-    configured.value = 1;
-    isDisabled.value = false;
-  }
-  catch (e) {
-    console.log("Could not connect to kinect", e);
+  // try {
+  //   kinectron = Kinectron(kinectAddress);
+  //   kinectron.setKinectType("windows");
+  //   kinectron.makeConnection();
+  //   configured.value = 1;
+  // }
+  // catch (e) {
+  //   console.log("Could not connect to kinect", e);
+  //   configured.value = 0;
+  // }
+
+  if(configured.value) {
     configured.value = 0;
-    isDisabled.value = true;
+  }
+  else {
+    configured.value = 1;
   }
 
 };
@@ -77,20 +90,20 @@ const close = () => {
       <div class="left">
         <el-link :underline="false" class="back-button" @click="close">🡐 Back</el-link>
         <div class="buttons-box">
-          <el-button class="play-button" v-bind:disabled="isDisabled">Single Player</el-button>
-          <el-button class="play-button" v-bind:disabled="isDisabled">Multiplayer</el-button>
+          <el-button class="play-button" v-bind:disabled="!configured">Single Player</el-button>
+          <el-button class="play-button" v-bind:disabled="!configured">Multiplayer</el-button>
         </div>
       </div>
       <div class="right">
         <div class="text-box">
-          <el-text v-if="configured == 0">Kinect device not connected</el-text>
+          <el-text v-if="!configured">Kinect device not connected</el-text>
           <el-text v-else>Kinect device connected</el-text>
         </div>
         <div class="input-box">
           <el-input placeholder="Enter kinect IP address" class="configure-input" v-model="kinectAddress" />
           <el-button class="configure-button" @click="connectKinect">Connect</el-button>
         </div>
-        <div v-if="configured" id="skeleton" ref="skeleton">
+        <div v-show="configured" id="skeleton" ref="skeleton">
         </div>
       </div>
     </div>
@@ -130,6 +143,7 @@ const close = () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   color: var(--color-white);
   padding-bottom: 30px;
 }
@@ -152,7 +166,7 @@ const close = () => {
   --el-input-focus-border-color: none;
   --text-color-tertiary: var(--color-black);
   font-size: 16px;
-  width: 45%;
+  width: 65%;
 }
 
 .configure-button {
@@ -203,11 +217,10 @@ const close = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-width: 60%;
   width: 50%;
   height: 70%;
 }
-
-
 
 
 </style>
