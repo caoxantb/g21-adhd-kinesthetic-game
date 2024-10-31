@@ -12,6 +12,8 @@ import xbot from '@/assets/game/X Bot.fbx'
 import texture from '@/assets/game/fire-edge-blue.jpg'
 import corridor_obj from '@/assets/game/Corridor.obj'
 import corridor_mtl from '@/assets/game/Corridor.mtl'
+import drone_obj from '@/assets/game/DroidOBJ/SciFiDroid.obj'
+import drone_mtl from '@/assets/game/DroidOBJ/SciFiDroid.mtl'
 
 const canvasRef = ref(null);
 
@@ -22,6 +24,7 @@ onMounted(() => {
   initThreeJS();
   loadCharacter();
   animate();
+  loadDrone();
   window.addEventListener("resize", handleWindowResize);
   window.addEventListener("keydown", handleKeyDown);
 });
@@ -48,6 +51,21 @@ function initThreeJS() {
   loadCorridor()
   addLights()
 }
+
+function loadDrone() {
+  const mtlLoader = new MTLLoader();
+  mtlLoader.load(drone_mtl, (materials) => {
+    materials.preload();
+    const objLoader = new OBJLoader();
+    objLoader.setMaterials(materials);
+
+    objLoader.load(drone_obj, (object) => {
+      scene.add(object);
+      animate();
+    });
+  });
+}
+
 
 function loadCorridor() {
   const mtlLoader = new MTLLoader();
