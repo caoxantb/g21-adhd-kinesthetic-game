@@ -2,12 +2,16 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
 
 import jump from '@/assets/game/animations/Jumping.fbx'
 import dodge from '@/assets/game/animations/Dodging Right.fbx'
 import idle from '@/assets/game/animations/Idle.fbx'
 import xbot from '@/assets/game/X Bot.fbx'
 import texture from '@/assets/game/fire-edge-blue.jpg'
+import corridor_obj from '@/assets/game/Corridor.obj'
+import corridor_mtl from '@/assets/game/Corridor.mtl'
 
 const canvasRef = ref(null);
 
@@ -41,8 +45,36 @@ function initThreeJS() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  addPlane()
+  loadCorridor()
   addLights()
+}
+
+function loadCorridor() {
+  const mtlLoader = new MTLLoader();
+  const objLoader = new OBJLoader();
+
+  mtlLoader.load(corridor_mtl, (materials) => {
+    materials.preload();
+    objLoader.setMaterials(materials);
+    
+    objLoader.load(corridor_obj, (object) => {
+      object.scale.setScalar(0.02); // Adjust scale as needed
+      // object.position.set(0, -1.5, -2); // Match character position
+      object.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      scene.add(object);
+    }, 
+    (xhr) => {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    },
+    (error) => {
+      console.error('Error loading model:', error);
+    });
+  });
 }
 
 function loadCharacter() {
@@ -88,19 +120,19 @@ function loadCharacter() {
   });
 }
 
-function addPlane() {
-  const width = 10; // Width of the plane
-  const length = 10000; // Length of the plane 
-  const geometry = new THREE.PlaneGeometry(width, length);
-  const material = new THREE.MeshStandardMaterial({ color: 0x001020 });
+// function addPlane() {
+//   const width = 10; // Width of the plane
+//   const length = 10000; // Length of the plane 
+//   const geometry = new THREE.PlaneGeometry(width, length);
+//   const material = new THREE.MeshStandardMaterial({ color: 0x001020 });
   
-  const plane = new THREE.Mesh(geometry, material);
-  plane.rotation.x = Math.PI * -0.5; // Rotate the plane to lie flat (facing upwards)
-  plane.receiveShadow = true;
-  plane.position.y = -1.5; // Adjust position if needed
+//   const plane = new THREE.Mesh(geometry, material);
+//   plane.rotation.x = Math.PI * -0.5; // Rotate the plane to lie flat (facing upwards)
+//   plane.receiveShadow = true;
+//   plane.position.y = -1.5; // Adjust position if needed
   
-  scene.add(plane);
-}
+//   scene.add(plane);
+// }
 
 function addLights() {
   const sunLight = new THREE.DirectionalLight(0xffffff, 10);
