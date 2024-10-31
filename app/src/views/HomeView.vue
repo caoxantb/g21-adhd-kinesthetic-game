@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { onBeforeMount, ref } from "vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import skeleton from "@/assets/skeleton.png";
 import { COLOR_RED } from "@/constants/";
@@ -42,6 +42,9 @@ const histories = ref([
     time: 12.3,
   },
 ]);
+
+onBeforeMount(async () => {
+});
 </script>
 
 <template>

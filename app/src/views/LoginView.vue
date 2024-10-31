@@ -1,36 +1,166 @@
 <script setup>
 import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
 import { COLOR_PRIMARY } from "@/constants/";
+
+const router = useRouter();
+const user = useUserStore();
 
 // type: 0 login 1 sign up
 const type = ref(0);
+
 const loginForm = reactive({
   username: "",
   password: "",
 });
+const loginFormRef = ref();
+const loginFormRules = reactive({
+  username: [
+    {
+      required: true,
+      whitespace: true,
+      message: "Please input username",
+      trigger: "blur",
+      transform(value) {
+        return value.trim();
+      },
+    },
+  ],
+  password: [
+    {
+      required: true,
+      whitespace: true,
+      message: "Please input password",
+      trigger: "blur",
+      transform(value) {
+        return value.trim();
+      },
+    },
+  ],
+});
 
+const signUpFormRef = ref();
 const signUpForm = reactive({
-  playerName: "",
+  name: "",
   age: null,
   username: "",
   password: "",
   confirmPassword: "",
 });
+const signUpFormRules = reactive({
+  name: [
+    {
+      required: true,
+      whitespace: true,
+      message: "Please input name",
+      trigger: "blur",
+      transform(value) {
+        return value.trim();
+      },
+    },
+  ],
+  age: [
+    {
+      type: "number",
+      message: "Please input number",
+      trigger: "change",
+    },
+  ],
+  username: [
+    {
+      required: true,
+      whitespace: true,
+      message: "Please input username",
+      trigger: "blur",
+      transform(value) {
+        return value.trim();
+      },
+    },
+  ],
+  password: [
+    {
+      required: true,
+      whitespace: true,
+      message: "Please input password",
+      trigger: "blur",
+      transform(value) {
+        return value.trim();
+      },
+    },
+    {
+      min: 9,
+      message: "Length should be at least 9",
+      trigger: "blur",
+    },
+  ],
+  confirmPassword: [
+    {
+      validator(rule, value) {
+        return value === signUpForm.password;
+      },
+      message: "Passwords do not match",
+    },
+  ],
+});
 
-function login() {}
-function signUp() {}
+function login() {
+  loginFormRef.value.validate(async valid => {
+    if (valid) {
+      try {
+        await user.login({
+          username: loginForm.username,
+          password: loginForm.password,
+        });
+        router.push("home");
+      } catch (err) {}
+    }
+  });
+}
+
+function signUp() {
+  signUpFormRef.value.validate(async valid => {
+    if (valid) {
+      try {
+        await user.register({
+          name: signUpForm.name,
+          username: signUpForm.username,
+          password: signUpForm.password,
+          age: signUpForm.age,
+        });
+        router.push("home");
+      } catch (err) {}
+    }
+  });
+}
 </script>
 
 <template>
   <div class="container">
     <div class="logo">Game Logo</div>
     <div class="main" v-if="type == 0">
-      <el-form label-width="auto" label-position="top">
-        <el-form-item label="Username">
-          <el-input v-model="loginForm.username" placeholder="Enter username" />
+      <el-form
+        ref="loginFormRef"
+        :model="loginForm"
+        label-width="auto"
+        label-position="top"
+        :rules="loginFormRules"
+        @submit.prevent
+      >
+        <el-form-item label="Username" prop="username" required>
+          <el-input
+            v-model="loginForm.username"
+            placeholder="Enter username"
+            autocomplete="off"
+          />
         </el-form-item>
-        <el-form-item label="Password">
-          <el-input v-model="loginForm.password" placeholder="Enter password" />
+        <el-form-item label="Password" prop="password" required>
+          <el-input
+            type="password"
+            v-model="loginForm.password"
+            placeholder="Enter password"
+            autocomplete="off"
+          />
         </el-form-item>
         <el-form-item>
           <el-button
@@ -46,36 +176,51 @@ function signUp() {}
         Not a member? <span class="link" @click="type = 1">Sign up now</span>
       </div>
     </div>
+
     <div class="main" v-else>
-      <el-form label-width="auto" label-position="top">
-        <el-form-item label="Player Name">
+      <el-form
+        ref="signUpFormRef"
+        :model="signUpForm"
+        label-width="auto"
+        label-position="top"
+        :rules="signUpFormRules"
+        @submit.prevent
+      >
+        <el-form-item label="Player Name" prop="name" required>
           <el-input
-            v-model="signUpForm.playerName"
+            v-model="signUpForm.name"
             placeholder="Enter name of player"
+            autocomplete="off"
           />
         </el-form-item>
-        <el-form-item label="Age">
+        <el-form-item label="Age" prop="age">
           <el-input
-            v-model="signUpForm.age"
+            v-model.number="signUpForm.age"
             placeholder="Enter age of player"
+            autocomplete="off"
           />
         </el-form-item>
-        <el-form-item label="Username">
+        <el-form-item label="Username" prop="username" required>
           <el-input
             v-model="signUpForm.username"
             placeholder="Enter username"
+            autocomplete="off"
           />
         </el-form-item>
-        <el-form-item label="Password">
+        <el-form-item label="Password" prop="password" required>
           <el-input
+            type="password"
             v-model="signUpForm.password"
             placeholder="Enter password"
+            autocomplete="off"
           />
         </el-form-item>
-        <el-form-item label="Confirm Password">
+        <el-form-item label="Confirm Password" prop="confirmPassword" required>
           <el-input
+            type="password"
             v-model="signUpForm.confirmPassword"
             placeholder="Confirm Password"
+            autocomplete="off"
           />
         </el-form-item>
         <el-form-item>
