@@ -6,30 +6,36 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
 
 import jump from '@/assets/game/animations/Jumping.fbx'
-import dodge from '@/assets/game/animations/Dodging Right.fbx'
-import idle from '@/assets/game/animations/Idle.fbx'
+import run from '@/assets/game/animations/Running.fbx'
 import xbot from '@/assets/game/X Bot.fbx'
+
 import texture from '@/assets/game/fire-edge-blue.jpg'
-import corridor_obj from '@/assets/game/Corridor.obj'
-import corridor_mtl from '@/assets/game/Corridor.mtl'
+import groundTexture from '@/assets/game/roadtexture.png'
+
 import drone_obj from '@/assets/game/DroidOBJ/SciFiDroid.obj'
 import drone_mtl from '@/assets/game/DroidOBJ/SciFiDroid.mtl'
-import billboard from '@/assets/game/billboard.fbx'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 
 const canvasRef = ref(null);
 
-let scene, camera, renderer, character, mixer, activeAction, controls;
+let scene, camera, renderer, character, mixer, activeAction, controls, groundMaterial;
 let actions = {}
 let drone = false
+let drones = []; // Array to store multiple drones
+let groundTiles = []; // Array to store ground segments
+const RUNNING_SPEED = 0.1;
+const GROUND_SEGMENT_LENGTH = 100;
+const NUMBER_OF_SEGMENTS = 3;
 
 onMounted(() => {
   initThreeJS();
   loadCharacter();
   animate();
   loadDrone();
+  addLights()
+  createGroundSegments();
   window.addEventListener("resize", handleWindowResize);
   window.addEventListener("keydown", handleKeyDown);
 });
@@ -53,8 +59,7 @@ function initThreeJS() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  addPlane()
-  addLights()
+  // addPlane()
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; // Damping gives smoother movement
@@ -77,6 +82,39 @@ function loadDrone() {
       animate();
     });
   });
+}
+
+function createGroundSegments() {
+  const width = 10;
+  const length = GROUND_SEGMENT_LENGTH;
+  const geometry = new THREE.PlaneGeometry(width, length, 1, 1);
+  
+  // Load texture
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load(groundTexture);
+  
+  // Set texture properties
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 20); // Adjust these values to change texture tiling
+  
+  // Create material with animated texture
+  groundMaterial = new THREE.MeshStandardMaterial({
+    map: texture,
+    roughness: 0.8,
+    metalness: 0.2
+  });
+
+  // Create multiple ground segments
+  for (let i = 0; i < NUMBER_OF_SEGMENTS; i++) {
+    const plane = new THREE.Mesh(geometry, groundMaterial);
+    plane.rotation.x = Math.PI * -0.5;
+    plane.receiveShadow = true;
+    plane.position.y = -1.5;
+    plane.position.z = -2 + (i * GROUND_SEGMENT_LENGTH);
+    scene.add(plane);
+    groundTiles.push(plane);
+  }
 }
 
 
@@ -108,6 +146,8 @@ function loadDrone() {
 //   });
 // }
 
+let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
+
 function loadCharacter() {
   const loader = new FBXLoader();
   const textureLoader = new THREE.TextureLoader();
@@ -115,7 +155,11 @@ function loadCharacter() {
   loader.load(xbot, (fbx) => {
     character = fbx;
     character.scale.setScalar(0.02);
-    character.position.set(0, -1.5, -2);
+    character.position.set(
+      characterDefaultPosition.x, 
+      characterDefaultPosition.y, 
+      characterDefaultPosition.z
+    );
     character.traverse((c) => {
       if (c.isMesh) {
         c.material = new THREE.MeshMatcapMaterial({
@@ -125,51 +169,46 @@ function loadCharacter() {
       }
     });
     
-    // Set up animation mixer
     mixer = new THREE.AnimationMixer(character);
 
-    loader.load(idle, (animFbx) => {
+    // Load running animation with continuous loop
+    loader.load(run, (animFbx) => {
       const anim = animFbx.animations[0];
-      actions.idle= mixer.clipAction(anim)
-      actions.idle.play(); // Play idle animation by default
-      activeAction = actions.idle; // Set idle as the active action
+      actions.run = mixer.clipAction(anim);
+      actions.run.timeScale = 0.5
+      actions.run.play();
+      activeAction = actions.run;
     });
-    
 
+    // Load jump animation
     loader.load(jump, (animFbx) => {
       const anim = animFbx.animations[0];
       actions.jump = mixer.clipAction(anim);
     });
 
-    loader.load(dodge, (animFbx) => {
-      const anim = animFbx.animations[0];
-      actions.dodge = mixer.clipAction(anim);
-    });
-
     scene.add(character);
-
   });
 }
 
-function addPlane() {
-  const width = 10; // Width of the plane
-  const length = 10000; // Length of the plane 
-  const geometry = new THREE.PlaneGeometry(width, length);
-  const material = new THREE.MeshStandardMaterial({ color: 0x001020 });
-  
-  const plane = new THREE.Mesh(geometry, material);
-  plane.rotation.x = Math.PI * -0.5; // Rotate the plane to lie flat (facing upwards)
-  plane.receiveShadow = true;
-  plane.position.y = -1.5; // Adjust position if needed
-  
-  scene.add(plane);
-}
-
 function addLights() {
-  const sunLight = new THREE.DirectionalLight(0xffffff, 10);
+  // Main directional light
+  const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
   sunLight.position.set(2, 4, 3);
   sunLight.castShadow = true;
   scene.add(sunLight);
+
+  // Ambient light for overall visibility
+  const ambientLight = new THREE.AmbientLight(0x404040, 1);
+  scene.add(ambientLight);
+
+  // Add point lights for better depth perception
+  const frontLight = new THREE.PointLight(0xffffff, 0.5);
+  frontLight.position.set(0, 5, 5);
+  scene.add(frontLight);
+
+  const backLight = new THREE.PointLight(0xffffff, 0.5);
+  backLight.position.set(0, 5, -5);
+  scene.add(backLight);
 }
 
 function animate() {
@@ -178,11 +217,15 @@ function animate() {
     mixer.update(0.016); // Update animations (assuming 60fps)
   }
 
-  if (drone) {
-    drone.position.z -= 0.05
-    if (drone.position.z < -5) {
-      drone.position.z = 15
-    }
+  // if (drone) {
+  //   drone.position.z -= 0.05
+  //   if (drone.position.z < -5) {
+  //     drone.position.z = 15
+  //   }
+  // }
+
+  if (groundMaterial && groundMaterial.map) {
+    groundMaterial.map.offset.y -= RUNNING_SPEED * 0.1; // Adjust this value to change texture scroll speed
   }
 
   renderer.render(scene, camera);
