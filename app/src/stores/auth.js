@@ -1,12 +1,13 @@
 import { defineStore } from "pinia";
-import { getUser, setUser, deleteUser } from "@/utils/user";
-import api from "@/api/";
+import { getUser, setUser, deleteUser } from "@/utils/auth";
 
-export const useUserStore = defineStore("user", {
+export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: getUser() || null,
   }),
-  getters: {},
+  getters: {
+    hasUser: state => state.user != null,
+  },
   actions: {
     async login(data) {
       const res = await api.post("/users/login", data);
@@ -27,7 +28,7 @@ export const useUserStore = defineStore("user", {
     },
     async current() {
       const res = await api.get("/users/current");
-      
+
       setUser(res);
     },
   },

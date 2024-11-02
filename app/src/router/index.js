@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "@/views/HomeView.vue";
 import LoginView from "@/views/LoginView.vue";
 import GameView from "@/views/GameView.vue";
+import { useAuthStore } from "@/stores/auth";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,9 +24,18 @@ const router = createRouter({
     },
     {
       path: "/:catchAll(.*)",
-      redirect: "/",
+      redirect: "/login",
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const auth = useAuthStore();
+  if (to.name !== "login" && !auth.hasUser) {
+    next({ name: "login" });
+  } else {
+    next();
+  }
 });
 
 export default router;

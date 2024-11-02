@@ -1,4 +1,4 @@
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 import router from "@/router";
 
 export function setUser(user) {
@@ -13,8 +13,8 @@ export function getUser() {
 export function deleteUser() {
   localStorage.removeItem("user");
 
-  const user = useUserStore();
-  user.$reset();
+  const auth = useAuthStore();
+  auth.$reset();
 
   router.push("login");
 }

@@ -1,11 +1,11 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 import { COLOR_PRIMARY } from "@/constants/";
 
 const router = useRouter();
-const user = useUserStore();
+const auth = useAuthStore();
 
 // type: 0 login 1 sign up
 const type = ref(0);
@@ -108,11 +108,12 @@ function login() {
   loginFormRef.value.validate(async valid => {
     if (valid) {
       try {
-        await user.login({
+        await auth.login({
           username: loginForm.username,
           password: loginForm.password,
         });
-        router.push("home");
+
+        router.push("/");
       } catch (err) {}
     }
   });
@@ -122,13 +123,13 @@ function signUp() {
   signUpFormRef.value.validate(async valid => {
     if (valid) {
       try {
-        await user.register({
+        await auth.register({
           name: signUpForm.name,
           username: signUpForm.username,
           password: signUpForm.password,
           age: signUpForm.age,
         });
-        router.push("home");
+        router.push("/");
       } catch (err) {}
     }
   });
@@ -262,6 +263,9 @@ function signUp() {
   border-radius: 20px;
   padding: 30px;
   width: 100%;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
 }
 
 .button-large {

@@ -1,12 +1,12 @@
 <script setup>
-import { useUserStore } from "@/stores/user";
+import { useAuthStore } from "@/stores/auth";
 import { COLOR_WHITE } from "@/constants/";
 
-const user = useUserStore();
+const auth = useAuthStore();
 
 async function logout() {
   try {
-    await user.logout();
+    await auth.logout();
   } catch (err) {}
 }
 </script>
