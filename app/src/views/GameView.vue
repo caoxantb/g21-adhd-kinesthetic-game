@@ -5,7 +5,7 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
 
-import jump from '@/assets/game/animations/Jumping.fbx'
+import jump from '@/assets/game/animations/jump.fbx'
 import run from '@/assets/game/animations/Running.fbx'
 import xbot from '@/assets/game/X Bot.fbx'
 
@@ -22,19 +22,25 @@ const canvasRef = ref(null);
 
 let scene, camera, renderer, character, mixer, activeAction, controls, groundMaterial;
 let actions = {}
-let drone = false
-let drones = []; // Array to store multiple drones
 let groundTiles = []; // Array to store ground segments
 const RUNNING_SPEED = 0.1;
 const GROUND_SEGMENT_LENGTH = 100;
 const NUMBER_OF_SEGMENTS = 3;
 
+let dronesPool = []; // Pool of available drones
+let activeDrones = []; // Currently active drones
+const NUMBER_OF_DRONES = 5; // Number of drones in the pool
+const DRONE_SPAWN_DISTANCE = 40; // Distance ahead where drones spawn
+const DRONE_SPEED = 0.15; // Speed of drones moving toward player
+
+let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
+
 onMounted(() => {
   initThreeJS();
   loadCharacter();
   animate();
-  loadDrone();
   addLights()
+  initializeDronePool();
   createGroundSegments();
   window.addEventListener("resize", handleWindowResize);
   window.addEventListener("keydown", handleKeyDown);
@@ -67,21 +73,98 @@ function initThreeJS() {
   controls.target.set(0, 1, -2);
 }
 
-function loadDrone() {
-  const mtlLoader = new MTLLoader();
-  mtlLoader.load(drone_mtl, (materials) => {
-    materials.preload();
-    const objLoader = new OBJLoader();
-    objLoader.setMaterials(materials);
+function createDrone() {
+  return new Promise((resolve) => {
+    const mtlLoader = new MTLLoader();
+    mtlLoader.load(drone_mtl, (materials) => {
+      materials.preload();
+      const objLoader = new OBJLoader();
+      objLoader.setMaterials(materials);
 
-    objLoader.load(drone_obj, (object) => {
-
-      object.position.set(0, -1, 15)
-      scene.add(object);
-      drone = object
-      animate();
+      objLoader.load(drone_obj, (object) => {
+        object.visible = false; // Start invisible
+        object.scale.set(0.8, 0.8, 0.8); // Adjust scale if needed
+        scene.add(object);
+        resolve(object);
+      });
     });
   });
+}
+
+async function initializeDronePool() {
+  // Create pool of drones
+  for (let i = 0; i < NUMBER_OF_DRONES; i++) {
+    const drone = await createDrone();
+    dronesPool.push(drone);
+  }
+  
+  // Start spawning drones
+  spawnDrone();
+}
+
+function spawnDrone() {
+  if (dronesPool.length === 0) return;
+
+  const drone = dronesPool.pop();
+  const lanePosition = 0// Math.floor(Math.random() * 3) - 1; // Random lane (-1, 0, 1)
+  
+  drone.position.set(
+    lanePosition * 2, // X position (lane)
+    1, // Y position (height)
+    character.position.z + DRONE_SPAWN_DISTANCE // Z position (ahead of player)
+  );
+  
+  drone.visible = true;
+  activeDrones.push(drone);
+}
+
+function checkCollision(drone, character) {
+  // Define collision box dimensions
+  const droneBox = {
+    width: 1,  // Adjust these values based on your drone size
+    height: 0.1,
+    depth: 1
+  };
+  const characterBox = {
+    width: 1,  // Adjust these values based on your character size
+    height: 0.1,
+    depth: 1
+  };
+
+  // Get positions
+  const dronePos = drone.position;
+  const characterPos = character.position;
+
+  // Check for overlap in all dimensions
+  const xCollision = Math.abs(dronePos.x - characterPos.x) < (droneBox.width + characterBox.width) / 2;
+  const zCollision = Math.abs(dronePos.z - characterPos.z) < (droneBox.depth + characterBox.depth) / 2;
+
+  return xCollision && zCollision //&& zCollision;
+}
+
+function updateDrones() {
+  for (let i = activeDrones.length - 1; i >= 0; i--) {
+    const drone = activeDrones[i];
+    drone.position.z -= DRONE_SPEED;
+
+    if (character && drone.visible) {
+      if (checkCollision(drone, character)) {
+        // do something
+      }
+    }
+
+    // If drone has passed the character, recycle it
+    if (drone.position.z < character.position.z - 5) {
+      drone.visible = false;
+      activeDrones.splice(i, 1);
+      dronesPool.push(drone);
+      
+      // Spawn a new drone if we have any in the pool
+      if (dronesPool.length > 0) {
+        spawnDrone();
+      }
+    }
+  }
 }
 
 function createGroundSegments() {
@@ -146,8 +229,6 @@ function createGroundSegments() {
 //   });
 // }
 
-let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
-
 function loadCharacter() {
   const loader = new FBXLoader();
   const textureLoader = new THREE.TextureLoader();
@@ -175,7 +256,7 @@ function loadCharacter() {
     loader.load(run, (animFbx) => {
       const anim = animFbx.animations[0];
       actions.run = mixer.clipAction(anim);
-      actions.run.timeScale = 0.5
+      // actions.run.timeScale = 0.5
       actions.run.play();
       activeAction = actions.run;
     });
@@ -216,13 +297,7 @@ function animate() {
   if (mixer) {
     mixer.update(0.016); // Update animations (assuming 60fps)
   }
-
-  // if (drone) {
-  //   drone.position.z -= 0.05
-  //   if (drone.position.z < -5) {
-  //     drone.position.z = 15
-  //   }
-  // }
+  updateDrones();
 
   if (groundMaterial && groundMaterial.map) {
     groundMaterial.map.offset.y -= RUNNING_SPEED * 0.1; // Adjust this value to change texture scroll speed
@@ -241,51 +316,31 @@ function handleKeyDown(e) {
   if (e.key === 'ArrowUp') {
     if (actions && actions.jump) {
       if (activeAction !== actions.jump) {
-        // Stop any currently playing action
-        if (activeAction) {
-          activeAction.stop();
-        }
+        // Set up the jump animation
+        actions.jump.reset().setLoop(THREE.LoopOnce, 1);
+        actions.jump.clampWhenFinished = true;
 
-        // Set the action to play once
-        actions.jump.reset().setLoop(THREE.LoopOnce, 1); 
-        actions.jump.clampWhenFinished = true; // Ensure it holds the last frame
+        // Create a smooth crossfade from running to jumping
+        const crossFadeDuration = 0.1;  // Adjust this value to control blend speed
+        activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
         actions.jump.play();
+        activeAction = actions.jump; 
 
-        // Listen for when the action finishes and stop it
-        mixer.addEventListener('finished', () => {
-          if (activeAction === actions.jump) {
-            // After jump finishes, go back to idle
-            actions.idle.reset().play();
-            activeAction = actions.idle;
-          }
-        });
-        activeAction = actions.jump; // Set active action
-      }    
-    }
-  }
-  if (e.key === 'ArrowDown') {
-    if (actions && actions.dodge) {
-      if (activeAction !== actions.dodge) {
-        // Stop any currently playing action
-        if (activeAction) {
-          activeAction.stop();
+        // Store previous action to transition back to
+        if (!mixer.listenerAdded) {
+          mixer.addEventListener('finished', () => {
+            if (activeAction === actions.jump) {
+              // After jump finishes, transition back to run
+              actions.run.reset();
+              activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
+              actions.run.play();
+              activeAction = actions.run;
+            }
+          });
+          mixer.listenerAdded = true; // Custom flag to prevent multiple listener additions
         }
-
-        // Set the action to play once
-        actions.dodge.reset().setLoop(THREE.LoopOnce, 1); 
-        actions.dodge.clampWhenFinished = true; // holds the last frame
-        actions.dodge.play();
-
-        // Listen for when the action finishes and stop it
-        mixer.addEventListener('finished', () => {
-          if (activeAction === actions.dodge) {
-            // After dodge finishes, go back to idle
-            actions.idle.reset().play();
-            activeAction = actions.idle;
-          }
-        });
-        activeAction = actions.dodge; // Set active action
-      }    
+        
+      }
     }
   }
 }
