@@ -41,3 +41,22 @@ button {
 .el-input__inner {
   --el-text-color-regular: var(--text-color-tertiary);
 }
+
+.el-progress-bar__outer {
+  --el-border-color-lighter: var(--border-color-lighter);
+}
+
+.el-progress--without-text .el-progress__text {
+  display: block;
+}
+
+.el-progress-bar__inner {
+  position: static !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.el-progress-bar__innerText {
+  width: calc(100% - 10px);
+  text-align: left;
+}
