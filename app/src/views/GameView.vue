@@ -7,7 +7,8 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
 
 import jump from '@/assets/game/animations/jump.fbx'
 import run from '@/assets/game/animations/Running.fbx'
-import xbot from '@/assets/game/X Bot.fbx'
+import xbot from '@/assets/game/michelle.fbx'
+import car from '@/assets/game/porsche.fbx'
 
 import texture from '@/assets/game/fire-edge-blue.jpg'
 import groundTexture from '@/assets/game/roadtexture.png'
@@ -39,7 +40,7 @@ onMounted(() => {
   initThreeJS();
   loadCharacter();
   animate();
-  addLights()
+  
   initializeDronePool();
   createGroundSegments();
   window.addEventListener("resize", handleWindowResize);
@@ -56,6 +57,7 @@ function initThreeJS() {
   const h = window.innerHeight;
   
   scene = new THREE.Scene();
+  scene.background = new THREE.Color('#FFFFFF')
   camera = new THREE.PerspectiveCamera(60, w / h, 0.5, 200);
   camera.position.set(0, 4, -6); // Position
   // camera.lookAt(0, 0, -1); // Look at point
@@ -66,6 +68,7 @@ function initThreeJS() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   // addPlane()
+  addLights()
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; // Damping gives smoother movement
@@ -74,6 +77,21 @@ function initThreeJS() {
 }
 
 function createDrone() {
+  return new Promise((resolve) => {
+    const fbxloader = new FBXLoader();
+    fbxloader.load(car, (fbx) => {
+      fbx.scale.setScalar(0.015);
+      fbx.traverse(c => {
+        c.castShadow = true;
+      });
+      fbx.visible = false
+      scene.add(fbx)
+      resolve(fbx)
+    });
+  });
+}
+
+function createDrone1() {
   return new Promise((resolve) => {
     const mtlLoader = new MTLLoader();
     mtlLoader.load(drone_mtl, (materials) => {
@@ -110,7 +128,7 @@ function spawnDrone() {
   
   drone.position.set(
     lanePosition * 2, // X position (lane)
-    1, // Y position (height)
+    -1.5, // Y position (height)
     character.position.z + DRONE_SPAWN_DISTANCE // Z position (ahead of player)
   );
   
@@ -229,9 +247,9 @@ function createGroundSegments() {
 //   });
 // }
 
+
 function loadCharacter() {
   const loader = new FBXLoader();
-  const textureLoader = new THREE.TextureLoader();
 
   loader.load(xbot, (fbx) => {
     character = fbx;
@@ -243,9 +261,6 @@ function loadCharacter() {
     );
     character.traverse((c) => {
       if (c.isMesh) {
-        c.material = new THREE.MeshMatcapMaterial({
-          matcap: textureLoader.load(texture),
-        });
         c.castShadow = true;
       }
     });
@@ -272,24 +287,25 @@ function loadCharacter() {
 }
 
 function addLights() {
-  // Main directional light
-  const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
-  sunLight.position.set(2, 4, 3);
-  sunLight.castShadow = true;
-  scene.add(sunLight);
+  let light = new THREE.DirectionalLight(0xFFFFFF, 1.0);
+  light.position.set(20, 100, 10);
+  light.target.position.set(0, 0, 0);
+  light.castShadow = true;
+  light.shadow.bias = -0.00001;
+  light.shadow.mapSize.width = 2048;
+  light.shadow.mapSize.height = 2048;
+  light.shadow.camera.near = 0.1;
+  light.shadow.camera.far = 500.0;
+  light.shadow.camera.near = 0.5;
+  light.shadow.camera.far = 500.0;
+  light.shadow.camera.left = 100;
+  light.shadow.camera.right = -100;
+  light.shadow.camera.top = 100;
+  light.shadow.camera.bottom = -100;
+  scene.add(light);
 
-  // Ambient light for overall visibility
-  const ambientLight = new THREE.AmbientLight(0x404040, 1);
-  scene.add(ambientLight);
-
-  // Add point lights for better depth perception
-  const frontLight = new THREE.PointLight(0xffffff, 0.5);
-  frontLight.position.set(0, 5, 5);
-  scene.add(frontLight);
-
-  const backLight = new THREE.PointLight(0xffffff, 0.5);
-  backLight.position.set(0, 5, -5);
-  scene.add(backLight);
+  light = new THREE.AmbientLight(0xFFFFFF, 2.0);
+  scene.add(light);
 }
 
 function animate() {
@@ -317,13 +333,20 @@ function handleKeyDown(e) {
     if (actions && actions.jump) {
       if (activeAction !== actions.jump) {
         // Set up the jump animation
-        actions.jump.reset().setLoop(THREE.LoopOnce, 1);
+        
+        actions.jump
+          .reset()
+          .setLoop(THREE.LoopOnce, 1);
         actions.jump.clampWhenFinished = true;
 
         // Create a smooth crossfade from running to jumping
         const crossFadeDuration = 0.1;  // Adjust this value to control blend speed
         activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
+        
         actions.jump.play();
+        actions.jump
+          .setEffectiveTimeScale(0.8)  // Use setEffectiveTimeScale instead of timeScale
+          .setEffectiveWeight(1.0)
         activeAction = actions.jump; 
 
         // Store previous action to transition back to
@@ -339,7 +362,6 @@ function handleKeyDown(e) {
           });
           mixer.listenerAdded = true; // Custom flag to prevent multiple listener additions
         }
-        
       }
     }
   }
