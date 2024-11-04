@@ -1,5 +1,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import LeftBar from "@/components/LeftBar.vue";
+import RightBar from "@/components/RightBar.vue";
+
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
@@ -313,7 +316,9 @@ function handleKeyDown(e) {
 
 <template>
   <div class="container">
+    <LeftBar :progress="30" :coins="1000"></LeftBar>
     <canvas ref="canvasRef" class="main"></canvas>
+    <RightBar :progress="25" :success="4" :fail="2"></RightBar>
   </div>
 </template>
 

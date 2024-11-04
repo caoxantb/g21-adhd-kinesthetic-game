@@ -1,11 +1,13 @@
 <script setup>
-import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 import { COLOR_WHITE } from "@/constants/";
 
-const router = useRouter();
+const auth = useAuthStore();
 
-function logout() {
-  router.push("login");
+async function logout() {
+  try {
+    await auth.logout();
+  } catch (err) {}
 }
 </script>
 

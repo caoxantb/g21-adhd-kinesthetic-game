@@ -9,7 +9,7 @@ axios.interceptors.request.use(
   },
   function (err) {
     return Promise.reject(err);
-  }
+  },
 );
 
 axios.interceptors.response.use(
@@ -18,7 +18,7 @@ axios.interceptors.response.use(
   },
   function (err) {
     return Promise.reject(err);
-  }
+  },
 );
 
 export default {
@@ -26,6 +26,7 @@ export default {
     return new Promise((resolve, reject) => {
       try {
         const res = axios.get(url, {
+          withCredentials: true,
           params,
         });
         resolve(res);
@@ -37,7 +38,9 @@ export default {
   post: function (url, params) {
     return new Promise((resolve, reject) => {
       try {
-        const res = axios.post(url, params);
+        const res = axios.post(url, params, {
+          withCredentials: true,
+        });
         resolve(res);
       } catch (err) {
         reject(err.data);
@@ -47,7 +50,9 @@ export default {
   put: function (url, params) {
     return new Promise((resolve, reject) => {
       try {
-        const res = axios.put(url, params);
+        const res = axios.put(url, params, {
+          withCredentials: true,
+        });
         resolve(res);
       } catch (err) {
         reject(err.data);
@@ -57,7 +62,9 @@ export default {
   delete: function (url) {
     return new Promise((resolve, reject) => {
       try {
-        const res = axios.delete(url);
+        const res = axios.delete(url, {
+          withCredentials: true,
+        });
         resolve(res);
       } catch (err) {
         reject(err.data);

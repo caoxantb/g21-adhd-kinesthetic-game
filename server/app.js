@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import "express-async-errors";
 import cors from "cors";
@@ -24,6 +27,7 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production",
 };
 const cookieSecret = process.env.COOKIE_SECRET;
+console.log(cookieSecret);
 
 app.set("cookieOptions", cookieOptions);
 app.set("cookieSecret", cookieSecret);

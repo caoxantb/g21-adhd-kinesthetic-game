@@ -26,6 +26,10 @@ watch(skeleton, (newSkeleton) => {
   }
 })
 
+function singlePlayer() {
+  router.push("game");
+}
+
 // For setting up the canvas.
 const s = (sketch) => {
 
@@ -88,7 +92,7 @@ const connectKinect = () => {
 };
 
 const close = () => {
-  router.push("home");
+  router.back();
 };
 
 </script>
@@ -111,7 +115,7 @@ const close = () => {
           </span>
         </div>
         <div class="buttons-box">
-          <el-button class="single-button" v-bind:disabled="!configured">Single Player</el-button>
+          <el-button class="single-button" v-bind:disabled="!configured" @click="singlePlayer">Single Player</el-button>
           <el-button class="multi-button" disabled>Multiplayer</el-button>
         </div>
       </div>

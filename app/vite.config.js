@@ -2,6 +2,8 @@ import { fileURLToPath, URL } from "node:url";
 
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import Icons from "unplugin-icons/vite";
+import IconsResolver from "unplugin-icons/resolver";
 
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
@@ -12,10 +14,21 @@ export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
-      resolvers: [ElementPlusResolver()],
+      resolvers: [
+        ElementPlusResolver(),
+      ],
     }),
     Components({
-      resolvers: [ElementPlusResolver()],
+      resolvers: [
+        ElementPlusResolver(),
+        IconsResolver({
+          prefix: "Icon",
+          enabledCollections: ["ep"],
+        }),
+      ],
+    }),
+    Icons({
+      autoInstall: true,
     }),
   ],
   assetsInclude: ["**/*.glb", "**/*.fbx", "**/*.obj", "**/*.mtl", "**/*.gltf"],

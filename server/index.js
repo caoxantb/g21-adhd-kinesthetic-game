@@ -1,6 +1,7 @@
+// import dotenv from "dotenv";
+// dotenv.config();
+
 import http from "http";
-import dotenv from "dotenv";
-dotenv.config();
 
 import app from "./app.js";
 import { connectDatabase } from "./db/connection.js";
