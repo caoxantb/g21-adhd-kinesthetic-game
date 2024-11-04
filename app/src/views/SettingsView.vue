@@ -14,7 +14,7 @@ const configured = ref(0);
 const divWidth = ref(0);
 const divHeight = ref(0);
 const skeleton = ref(null);
-const gameEnded = ref(1);
+const gameEnded = ref(0);
 let p5_canv = null;
 
 let kinectron = null;
@@ -112,7 +112,7 @@ const close = () => {
         </div>
         <div class="buttons-box">
           <el-button class="single-button" v-bind:disabled="!configured">Single Player</el-button>
-          <el-button class="multi-button" v-bind:disabled="!configured">Multiplayer</el-button>
+          <el-button class="multi-button" disabled>Multiplayer</el-button>
         </div>
       </div>
       <div class="right">

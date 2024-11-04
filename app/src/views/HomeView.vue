@@ -3,12 +3,15 @@ import { ref } from "vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import skeleton from "@/assets/skeleton.png";
 import { COLOR_RED } from "@/constants/";
+import { useRouter } from "vue-router";
 
 const username = ref("Player Name");
 const age = ref(8);
 
 const level = ref(3);
 const score = ref(56);
+
+const router = useRouter();
 
 const histories = ref([
   {
@@ -42,6 +45,10 @@ const histories = ref([
     time: 12.3,
   },
 ]);
+
+const startNewGame = () => {
+  router.push("settings");
+};
 </script>
 
 <template>
@@ -50,7 +57,7 @@ const histories = ref([
       <div class="left">
         <img class="skeleton" :src="skeleton" alt="" />
         <el-button size="large" :color="COLOR_RED" class="button-large"
-          >Start New Game</el-button
+          @click="startNewGame">Start New Game</el-button
         >
       </div>
       <div class="right">
