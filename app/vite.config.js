@@ -31,7 +31,7 @@ export default defineConfig({
       autoInstall: true,
     }),
   ],
-  assetsInclude: ["**/*.glb"],
+  assetsInclude: ["**/*.glb", "**/*.fbx", "**/*.obj", "**/*.mtl", "**/*.gltf"],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

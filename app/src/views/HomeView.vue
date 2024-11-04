@@ -30,8 +30,8 @@ async function getGameplays() {
   } catch (err) {}
 }
 
-function startGame() {
-  // router.push("/setting");
+function startNewGame() {
+  router.push("settings");
 }
 
 onBeforeMount(async () => {
@@ -49,7 +49,7 @@ onBeforeMount(async () => {
           size="large"
           :color="COLOR_RED"
           class="button-large"
-          @click="startGame"
+          @click="startNewGame"
           >Start New Game</el-button
         >
       </div>

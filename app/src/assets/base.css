@@ -4,9 +4,11 @@
   --color-white: #ffffff;
   --color-black: #000000;
   --color-red: #d43a68;
+  --color-light-red: #f56e96;
   --color-green: #40798c;
   --color-dark-blue: #0b5ba5;
   --color-blue: #61b3ce;
+  --color-light-gray: rgb(202, 202, 202);
 
   --text-color: var(--color-black);
   --text-color-tertiary: #b3b3b3;

@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "@/views/HomeView.vue";
 import LoginView from "@/views/LoginView.vue";
 import GameView from "@/views/GameView.vue";
-import DemoView from "@/views/DemoView.vue";
 import { useAuthStore } from "@/stores/auth";
+import SettingsView from "@/views/SettingsView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,13 +24,13 @@ const router = createRouter({
       component: GameView,
     },
     {
-      path: "/demo",
-      name: "demo",
-      component: DemoView,
+      path: "/settings",
+      name: "settings",
+      component: SettingsView,
     },
     {
       path: "/:catchAll(.*)",
-      redirect: "/login",
+      redirect: "/",
     },
   ],
 });
