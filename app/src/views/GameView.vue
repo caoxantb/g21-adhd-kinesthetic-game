@@ -217,6 +217,7 @@ function loadCharacter() {
       actions.run = mixer.clipAction(anim);
       actions.run.play();
       activeAction = actions.run;
+      scene.add(character)
     });
 
     // Setup jump animation
@@ -224,8 +225,6 @@ function loadCharacter() {
       const anim = animFbx.animations[0];
       actions.jump = mixer.clipAction(anim);
     });
-
-    scene.add(character);
   });
 }
 
