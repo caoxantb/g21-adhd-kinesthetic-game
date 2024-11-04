@@ -1,6 +1,7 @@
 <script setup>
 import MainLayout from "@/layouts/MainLayout.vue";
-import { watch, ref, onMounted } from "vue";
+import { Back, RefreshLeft, Timer } from "@element-plus/icons-vue"
+import { watch, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -13,6 +14,8 @@ const configured = ref(0);
 const divWidth = ref(0);
 const divHeight = ref(0);
 const skeleton = ref(null);
+const gameEnded = ref(1);
+let p5_canv = null;
 
 let kinectron = null;
 
@@ -26,11 +29,8 @@ watch(skeleton, (newSkeleton) => {
 // For setting up the canvas.
 const s = (sketch) => {
 
-  let x = 100;
-  let y = 100;
-
   sketch.setup = () => {
-    sketch.createCanvas(400, 600);
+    sketch.createCanvas(divWidth.value, divHeight.value);
   };
 
   // Here you can draw the body.
@@ -52,9 +52,6 @@ const s = (sketch) => {
 
 };
 
-new p5(s, "skeleton");
-
-
 const connectKinect = () => {
 
   // try {
@@ -73,6 +70,19 @@ const connectKinect = () => {
   }
   else {
     configured.value = 1;
+
+    // Setting the canvas once the kinect has been connected.
+    setTimeout(() => {
+    divWidth.value = skeleton.value.offsetWidth;
+    divHeight.value = skeleton.value.offsetHeight;
+
+    if (!p5_canv) {
+      p5_canv = new p5(s, "skeleton");
+    }
+    else {
+      p5_canv.resizeCanvas(divWidth.value, divHeight.value);
+    }
+    }, 100);
   }
 
 };
@@ -88,10 +98,21 @@ const close = () => {
   <MainLayout>
     <div class="container">
       <div class="left">
-        <el-link :underline="false" class="back-button" @click="close">🡐 Back</el-link>
+        <el-link :underline="false" class="back-button" @click="close" :icon="Back">Back</el-link>
+        <div class="stats-box" v-if="gameEnded">
+          <el-text class="goodgame-text">Good Game!</el-text>
+          <span class="minutes-box">
+            <el-icon :size="24" style="padding-bottom: 2px"><Timer /></el-icon>
+            <el-text class="minutes-text">8.03 minutes</el-text>
+          </span>
+          <span class="resets-box">
+            <el-icon :size="24" style="padding-bottom: 2px"><RefreshLeft /></el-icon>
+            <el-text class="resets-text">7 resets</el-text>
+          </span>
+        </div>
         <div class="buttons-box">
-          <el-button class="play-button" v-bind:disabled="!configured">Single Player</el-button>
-          <el-button class="play-button" v-bind:disabled="!configured">Multiplayer</el-button>
+          <el-button class="single-button" v-bind:disabled="!configured">Single Player</el-button>
+          <el-button class="multi-button" v-bind:disabled="!configured">Multiplayer</el-button>
         </div>
       </div>
       <div class="right">
@@ -148,6 +169,34 @@ const close = () => {
   padding-bottom: 30px;
 }
 
+.stats-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 70px;
+}
+
+.goodgame-text {
+  color: var(--color-green);
+  font-size: 40px;
+}
+
+.minutes-text, .resets-text {
+  color: var(--color-black);
+  display: flex;
+  flex-direction: row;
+  margin-left: 6px;
+  font-weight: 500;
+  font-size: 17px;
+}
+
+.resets-box, .minutes-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+
 .text-box {
   display: flex;
   justify-content: center;
@@ -158,6 +207,9 @@ const close = () => {
   flex-direction: row;
   justify-content: center;
   margin-bottom: 40px;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 58%;
 }
 
 .configure-input {
@@ -166,7 +218,8 @@ const close = () => {
   --el-input-focus-border-color: none;
   --text-color-tertiary: var(--color-black);
   font-size: 16px;
-  width: 65%;
+  width: 90%;
+  min-width: 200px;
 }
 
 .configure-button {
@@ -184,19 +237,33 @@ const close = () => {
   margin-bottom: 50px;
 }
 
-.play-button {
+.single-button, .multi-button {
   height: 95px !important;
   margin-bottom: 20px;
   width: 350px;
   --el-border-radius-base: 20px;
   --el-font-size-base: 30px;
-  --el-button-bg-color: var(--color-red);
-  --el-button-hover-bg-color: var(--color-light-red);
   color: var(--color-white);
 }
 
-.play-button.is-disabled, .play-button.is-disabled:hover {
+.single-button {
+  --el-button-bg-color: var(--color-red);
+  --el-button-hover-bg-color: var(--color-light-red);
+}
+
+.multi-button {
+  --el-button-bg-color: var(--text-color-tertiary);
+  --el-button-hover-bg-color: var(--color-light-gray);
+}
+
+.single-button.is-disabled, .single-button.is-disabled:hover  {
   background-color: var(--color-red);
+  opacity: 0.7;
+  color: var(--color-white);
+}
+
+.multi-button.is-disabled, .multi-button.is-disabled:hover {
+  background-color: var(--text-color-tertiary);
   opacity: 0.7;
   color: var(--color-white);
 }
