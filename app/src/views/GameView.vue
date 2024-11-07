@@ -4,6 +4,7 @@ import LeftBar from "@/components/LeftBar.vue";
 import RightBar from "@/components/RightBar.vue";
 
 import * as THREE from "three";
+import { OBB } from 'three/addons/math/OBB.js';
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
 import jump from '@/assets/game/animations/jump.fbx'
@@ -85,6 +86,8 @@ function createCar() {
         c.castShadow = true;
       });
       fbx.visible = false
+      fbx.mesh.geometry.userdata.obb = new OBB().fromBox3(fbx.mesh.geometry.boundingBox)
+      fbx.mesh.userdata.obb = new OBB()
       scene.add(fbx)
       resolve(fbx)
     });
@@ -206,6 +209,8 @@ function loadCharacter() {
       characterDefaultPosition.y, 
       characterDefaultPosition.z
     );
+    character.mesh.geometry.userdata.obb = new OBB().fromBox3(character.mesh.geometry.boundingBox)
+    character.mesh.userdata.obb = new OBB()
     character.traverse((c) => {
       if (c.isMesh) {
         c.castShadow = true;
@@ -265,6 +270,11 @@ function animate() {
   // Update ground texture scroll
   if (groundMaterial && groundMaterial.map) {
     groundMaterial.map.offset.y -= RUNNING_SPEED * 0.1;
+  }
+
+  // Collision detection here
+  if (character.mesh.userData.obb.intersectsOBB(car.mesh.userData.obb)) {
+    console.log("here collision");
   }
 
   renderer.render(scene, camera);
