@@ -38,6 +38,13 @@ const userSchema = new mongoose.Schema(
       },
       min: 0,
     },
+    gameplaySettings: {
+      type: {
+        numberOfBlocks: { type: Number, min: 2, default: 4 },
+        blockJumpingDurations: { type: [Number], default: [60, 60, 60, 60] },
+        blockPosingDurations: { type: [Number], default: [10, 20, 30, 40] },
+      },
+    },
   },
   {
     timestamps: true,
