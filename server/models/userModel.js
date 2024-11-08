@@ -31,13 +31,6 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "player"],
       default: "player",
     },
-    currentLevel: {
-      type: Number,
-      default: function () {
-        return this.role === "player" ? 1 : null;
-      },
-      min: 1,
-    },
     totalScore: {
       type: Number,
       default: function () {
