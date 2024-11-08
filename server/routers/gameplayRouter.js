@@ -3,7 +3,6 @@ import {
   saveGameplay,
   getGameplayById,
   getGameplaysByPlayer,
-  getGameplaysByLevel,
 } from "../controllers/gameplayController.js";
 
 const router = express.Router();
@@ -16,8 +15,5 @@ router.get("/:id", getGameplayById);
 
 // GET all gameplays by player
 router.get("/player/:username", getGameplaysByPlayer);
-
-// GET all gameplays by level
-router.get("/level/:levelId", getGameplaysByLevel);
 
 export default router;
