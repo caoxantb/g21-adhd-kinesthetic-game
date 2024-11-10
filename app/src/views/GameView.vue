@@ -7,6 +7,9 @@ import * as THREE from "three";
 import { OBB } from 'three/addons/math/OBB.js';
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
+import * as CANNON from 'cannon-es';
+import { threeToCannon, ShapeType } from 'three-to-cannon';
+
 import jump from '@/assets/game/animations/jump.fbx'
 import run from '@/assets/game/animations/Running.fbx'
 import michelle from '@/assets/game/michelle.fbx'
@@ -37,6 +40,23 @@ const CAR_SPEED = 0.35;
 
 // Starting position for the character
 let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
+
+// Cannon world initialization.
+// const world = new CANNON.World({
+//     gravity: new CANNON.Vec3(0, 0, 0)
+// });
+
+// const bodyMat = new CANNON.Material();
+
+// const charBody = new CANNON.Body({
+//   mass: 0,
+//   material: bodyMat
+// });
+
+// const carBody = new CANNON.Body({
+//   mass: 0,
+//   material: bodyMat
+// });
 
 onMounted(() => {
   initThreeJS();
@@ -82,13 +102,23 @@ function createCar() {
     const fbxLoader = new FBXLoader();
     fbxLoader.load(car, (fbx) => {
       fbx.scale.setScalar(0.015);
+      const box3 = new THREE.Box3().setFromObject(fbx);
       fbx.traverse(c => {
         c.castShadow = true;
+        if(c.isMesh) {
+          c.geometry.boundingBox = box3;
+          c.geometry.userData.obb = new OBB().fromBox3(c.geometry.boundingBox)
+          c.userData.obb = new OBB()
+        }
       });
       fbx.visible = false
-      fbx.mesh.geometry.userdata.obb = new OBB().fromBox3(fbx.mesh.geometry.boundingBox)
-      fbx.mesh.userdata.obb = new OBB()
       scene.add(fbx)
+
+      // Cannon js
+      // const carToCannon = threeToCannon(fbx, {type: ShapeType.HULL});
+      // const {shape, offset, orientation} = carToCannon;
+      // carBody.addShape(shape, offset, orientation);
+      
       resolve(fbx)
     });
   });
@@ -115,7 +145,11 @@ function spawnCar() {
     -1.5,
     character.position.z + CAR_SPAWN_DISTANCE
   );
-  
+
+  // Cannon js version
+  // carBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+  // world.addBody(carBody);
+
   carInstance.visible = true;
   activeCars.push(carInstance);
 }
@@ -149,6 +183,28 @@ function updateCars() {
     carInstance.position.z -= CAR_SPEED;
 
     if (character && carInstance.visible) {
+      // Check for collision
+      carInstance.traverse(cInst => {
+        if (cInst.isMesh) {
+          // Three js version for collision detection update
+          character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb)
+          cInst.userData.obb.copy(cInst.geometry.userData.obb)
+          character.children[0].userData.obb.applyMatrix4(character.children[0].matrixWorld)
+          cInst.userData.obb.applyMatrix4(cInst.matrixWorld)
+
+          // Cannon js version for collision detection update
+          // cInst.position.copy(carBody.position);
+          // cInst.quaternion.copy(carBody.quaternion);
+          // character.children[0].position.copy(charBody.position);
+          // character.children[0].quaternion.copy(charBody.quaternion);
+
+          if (character.children[0].userData.obb.intersectsOBB(cInst.userData.obb)) {
+            console.log("here collision");
+          }
+        }
+      });
+      
+
       if (checkCollision(carInstance, character)) {
         // Collision handling can be added here
       }
@@ -209,16 +265,20 @@ function loadCharacter() {
       characterDefaultPosition.y, 
       characterDefaultPosition.z
     );
-    character.mesh.geometry.userdata.obb = new OBB().fromBox3(character.mesh.geometry.boundingBox)
-    character.mesh.userdata.obb = new OBB()
+
+    const box3 = new THREE.Box3().setFromObject(character);
+
     character.traverse((c) => {
       if (c.isMesh) {
         c.castShadow = true;
+        c.geometry.boundingBox = box3;
+        c.geometry.userData.obb = new OBB().fromBox3(c.geometry.boundingBox);
+        c.userData.obb = new OBB();
       }
     });
     
     mixer = new THREE.AnimationMixer(character);
-
+    const bbHelper = new THREE.BoxHelper(character);
     // Setup running animation
     loader.load(run, (animFbx) => {
       const anim = animFbx.animations[0];
@@ -227,6 +287,13 @@ function loadCharacter() {
       activeAction = actions.run;
       scene.add(character)
     });
+
+    scene.add(bbHelper);
+    // Cannon js
+    // const charToCannon = threeToCannon(character, {type: ShapeType.HULL});
+    // const {shape, offset, orientation} = charToCannon;
+    // charBody.addShape(shape, offset, orientation);
+    // world.addBody(charBody);
 
     // Setup jump animation
     loader.load(jump, (animFbx) => {
@@ -265,16 +332,15 @@ function animate() {
   if (mixer) {
     mixer.update(0.016); // Update animations (assuming 60fps)
   }
+
+  // Cannon version
+  // world.step(0.016);
+
   updateCars();
 
   // Update ground texture scroll
   if (groundMaterial && groundMaterial.map) {
     groundMaterial.map.offset.y -= RUNNING_SPEED * 0.1;
-  }
-
-  // Collision detection here
-  if (character.mesh.userData.obb.intersectsOBB(car.mesh.userData.obb)) {
-    console.log("here collision");
   }
 
   renderer.render(scene, camera);
