@@ -17,6 +17,12 @@ const props = defineProps({
     default: 0,
   },
 });
+
+const emit = defineEmits(["jump"]);
+
+function triggerJump() {
+  emit("jump");
+}
 </script>
 
 <template>
@@ -42,6 +48,8 @@ const props = defineProps({
     </div>
 
     <img class="skeleton" :src="skeleton" alt="" />
+
+    <el-button size="large" @click="triggerJump">Jump</el-button>
   </div>
 </template>
 
