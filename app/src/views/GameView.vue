@@ -7,9 +7,6 @@ import * as THREE from "three";
 import { OBB } from 'three/addons/math/OBB.js';
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
-import * as CANNON from 'cannon-es';
-import { threeToCannon, ShapeType } from 'three-to-cannon';
-
 import jump from '@/assets/game/animations/jump.fbx'
 import run from '@/assets/game/animations/Running.fbx'
 import michelle from '@/assets/game/michelle.fbx'
@@ -41,22 +38,11 @@ const CAR_SPEED = 0.35;
 // Starting position for the character
 let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
 
-// Cannon world initialization.
-// const world = new CANNON.World({
-//     gravity: new CANNON.Vec3(0, 0, 0)
-// });
+// Chosen mesh for the car collision
+const child = 10;
 
-// const bodyMat = new CANNON.Material();
-
-// const charBody = new CANNON.Body({
-//   mass: 0,
-//   material: bodyMat
-// });
-
-// const carBody = new CANNON.Body({
-//   mass: 0,
-//   material: bodyMat
-// });
+// Check for jumping
+let jumping = false;
 
 onMounted(() => {
   initThreeJS();
@@ -102,22 +88,24 @@ function createCar() {
     const fbxLoader = new FBXLoader();
     fbxLoader.load(car, (fbx) => {
       fbx.scale.setScalar(0.015);
-      const box3 = new THREE.Box3().setFromObject(fbx);
+      
       fbx.traverse(c => {
         c.castShadow = true;
-        if(c.isMesh) {
-          c.geometry.boundingBox = box3;
-          c.geometry.userData.obb = new OBB().fromBox3(c.geometry.boundingBox)
-          c.userData.obb = new OBB()
-        }
       });
+
+      // Setting the bounding box for the car (here we are using the cube mesh from the model).
+      const box3 = new THREE.Box3().setFromObject(fbx);
+      box3.max.y -= 1.2;
+      box3.min.y -= 0.5;
+      box3.min.z += 2;
+      box3.min.x += 0.5;
+      box3.max.x -= 0.5;
+      fbx.children[child].geometry.boundingBox = box3;
+      fbx.children[child].geometry.userData.obb = new OBB().fromBox3(fbx.children[child].geometry.boundingBox)
+      fbx.children[child].userData.obb = new OBB()
+          
       fbx.visible = false
       scene.add(fbx)
-
-      // Cannon js
-      // const carToCannon = threeToCannon(fbx, {type: ShapeType.HULL});
-      // const {shape, offset, orientation} = carToCannon;
-      // carBody.addShape(shape, offset, orientation);
       
       resolve(fbx)
     });
@@ -146,15 +134,11 @@ function spawnCar() {
     character.position.z + CAR_SPAWN_DISTANCE
   );
 
-  // Cannon js version
-  // carBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-  // world.addBody(carBody);
-
   carInstance.visible = true;
   activeCars.push(carInstance);
 }
 
-// Check for collision between car and character
+// Check for collision between car and character (Old collision detection)
 function checkCollision(car, character) {
   const carBox = {
     width: 1,
@@ -176,6 +160,8 @@ function checkCollision(car, character) {
   return xCollision && zCollision;
 }
 
+let count = 0;
+
 // Update positions of all active cars and handle recycling
 function updateCars() {
   for (let i = activeCars.length - 1; i >= 0; i--) {
@@ -184,30 +170,44 @@ function updateCars() {
 
     if (character && carInstance.visible) {
       // Check for collision
-      carInstance.traverse(cInst => {
-        if (cInst.isMesh) {
-          // Three js version for collision detection update
-          character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb)
-          cInst.userData.obb.copy(cInst.geometry.userData.obb)
-          character.children[0].userData.obb.applyMatrix4(character.children[0].matrixWorld)
-          cInst.userData.obb.applyMatrix4(cInst.matrixWorld)
-
-          // Cannon js version for collision detection update
-          // cInst.position.copy(carBody.position);
-          // cInst.quaternion.copy(carBody.quaternion);
-          // character.children[0].position.copy(charBody.position);
-          // character.children[0].quaternion.copy(charBody.quaternion);
-
-          if (character.children[0].userData.obb.intersectsOBB(cInst.userData.obb)) {
-            console.log("here collision");
-          }
-        }
-      });
       
-
-      if (checkCollision(carInstance, character)) {
-        // Collision handling can be added here
+      
+      if (count < 341) {
+        count += 1;
       }
+
+      // Updates the car and character bounding boxes. If character is jumping, doesn't update
+      // character box.
+      if (!jumping) {
+        character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb)
+      }
+      carInstance.children[child].userData.obb.copy(carInstance.children[child].geometry.userData.obb)
+      //character.children[0].userData.obb.applyMatrix4(character.children[0].matrixWorld)
+      carInstance.children[child].userData.obb.applyMatrix4(carInstance.children[child].matrixWorld)
+
+      
+      // For drawing the outlines of the models for testing purposes.
+      if (count == 340) {
+        const bboxMaterial2 = new THREE.MeshBasicMaterial({ color: 0x00FF00, wireframe: true, depthTest: true  });
+        const bbox2 = new THREE.LineSegments(new THREE.BoxGeometry(
+          character.children[0].userData.obb.halfSize.x*2,
+          character.children[0].userData.obb.halfSize.y*2,
+          character.children[0].userData.obb.halfSize.z*2
+        ),
+          bboxMaterial2
+        );
+        bbox2.position.copy(character.children[0].userData.obb.center);
+			  scene.add(bbox2);
+      }
+
+      if (character.children[0].userData.obb.intersectsOBB(carInstance.children[child].userData.obb)) {
+        console.log("here collision");
+      }
+
+      // Old collision detection
+      // if (checkCollision(carInstance, character)) {
+      //   // Collision handling can be added here
+      // }
     }
 
     // Recycle car if it's passed the character
@@ -266,8 +266,10 @@ function loadCharacter() {
       characterDefaultPosition.z
     );
 
+    // Setting up the bounding box for the character.
     const box3 = new THREE.Box3().setFromObject(character);
-
+    box3.max.x = 1;
+    box3.min.x = -1;
     character.traverse((c) => {
       if (c.isMesh) {
         c.castShadow = true;
@@ -278,7 +280,6 @@ function loadCharacter() {
     });
     
     mixer = new THREE.AnimationMixer(character);
-    const bbHelper = new THREE.BoxHelper(character);
     // Setup running animation
     loader.load(run, (animFbx) => {
       const anim = animFbx.animations[0];
@@ -288,13 +289,6 @@ function loadCharacter() {
       scene.add(character)
     });
 
-    scene.add(bbHelper);
-    // Cannon js
-    // const charToCannon = threeToCannon(character, {type: ShapeType.HULL});
-    // const {shape, offset, orientation} = charToCannon;
-    // charBody.addShape(shape, offset, orientation);
-    // world.addBody(charBody);
-
     // Setup jump animation
     loader.load(jump, (animFbx) => {
       const anim = animFbx.animations[0];
@@ -302,6 +296,22 @@ function loadCharacter() {
     });
   });
 }
+
+// Updates the bounding box for the character when it jumps.
+function jumpObbUpdater() {
+
+  const obb = character.children[0].geometry.userData.obb;
+  if (jumping) {
+    obb.center.y += 2;
+  }
+  else {
+    obb.center.y -= 2;
+  }
+
+  character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb)
+
+}
+
 
 // Setup scene lighting
 function addLights() {
@@ -333,9 +343,6 @@ function animate() {
     mixer.update(0.016); // Update animations (assuming 60fps)
   }
 
-  // Cannon version
-  // world.step(0.016);
-
   updateCars();
 
   // Update ground texture scroll
@@ -358,11 +365,14 @@ function handleKeyDown(e) {
   if (e.key === 'ArrowUp') {
     if (actions && actions.jump) {
       if (activeAction !== actions.jump) {
+
+        jumping = true;
+        jumpObbUpdater();
         actions.jump
           .reset()
           .setLoop(THREE.LoopOnce, 1);
         actions.jump.clampWhenFinished = true;
-
+        
         const crossFadeDuration = 0.1;
         activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
         
@@ -376,6 +386,8 @@ function handleKeyDown(e) {
         if (!mixer.listenerAdded) {
           mixer.addEventListener('finished', () => {
             if (activeAction === actions.jump) {
+              jumping = false;
+              jumpObbUpdater();
               actions.run.reset();
               activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
               actions.run.play();
