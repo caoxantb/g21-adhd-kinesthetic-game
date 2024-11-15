@@ -34,6 +34,9 @@ const NUMBER_OF_CARS = 5;
 const CAR_SPAWN_DISTANCE = 120; // Distance ahead of player where cars spawn
 const CAR_SPEED = 0.35;
 
+let basehead = null;
+let jumping = false;
+
 // Starting position for the character
 let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
 
@@ -310,6 +313,51 @@ function handleKeyDown(e) {
         }
       }
     }
+  }
+}
+
+export function jumpDetection(body) {
+  var head = body.joints[kinectron.HEAD];
+
+  if(basehead === null) {
+    basehead = head.depthY*height;
+  }
+
+  if(!jumping && basehead - head.depthY*height >= 50) {
+    jumping = true;
+    console.log("JUMP DETECTED!!!!!");
+    if (actions && actions.jump) {
+      if (activeAction !== actions.jump) {
+        actions.jump
+          .reset()
+          .setLoop(THREE.LoopOnce, 1);
+        actions.jump.clampWhenFinished = true;
+
+        const crossFadeDuration = 0.1;
+        activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
+        
+        actions.jump.play();
+        actions.jump
+          .setEffectiveTimeScale(0.8)
+          .setEffectiveWeight(1.0)
+        activeAction = actions.jump; 
+
+        // Handle transition back to running after jump
+        if (!mixer.listenerAdded) {
+          mixer.addEventListener('finished', () => {
+            if (activeAction === actions.jump) {
+              actions.run.reset();
+              activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
+              actions.run.play();
+              activeAction = actions.run;
+            }
+          });
+          mixer.listenerAdded = true;
+        }
+      }
+    }
+  } else if(jumping && basehead - head.depthY*height < 50) {
+    jumping = false;
   }
 }
 </script>
