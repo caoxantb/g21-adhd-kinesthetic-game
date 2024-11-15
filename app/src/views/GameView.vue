@@ -9,6 +9,7 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
 import jump from '@/assets/game/animations/jump.fbx'
 import run from '@/assets/game/animations/Running.fbx'
+import stumble from '@/assets/game/animations/Jogging Stumble.fbx'
 import michelle from '@/assets/game/michelle.fbx'
 import car from '@/assets/game/porsche.fbx'
 
@@ -37,12 +38,16 @@ const CAR_SPEED = 0.35;
 
 // Starting position for the character
 let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
+const CHAR_FALL_VELOCITY = -0.002
 
 // Chosen mesh for the car collision
 const child = 10;
 
 // Check for jumping
 let jumping = false;
+
+// Checking of first frame for collision detection.
+let isFirstFrame = true;
 
 onMounted(() => {
   initThreeJS();
@@ -93,7 +98,7 @@ function createCar() {
         c.castShadow = true;
       });
 
-      // Setting the bounding box for the car (here we are using the cube mesh from the model).
+      // Setting the bounding box for the car.
       const box3 = new THREE.Box3().setFromObject(fbx);
       box3.max.y -= 1.2;
       box3.min.y -= 0.5;
@@ -101,13 +106,12 @@ function createCar() {
       box3.min.x += 0.5;
       box3.max.x -= 0.5;
       fbx.children[child].geometry.boundingBox = box3;
-      fbx.children[child].geometry.userData.obb = new OBB().fromBox3(fbx.children[child].geometry.boundingBox)
-      fbx.children[child].userData.obb = new OBB()
-          
-      fbx.visible = false
-      scene.add(fbx)
+      fbx.children[child].geometry.userData.obb = new OBB().fromBox3(fbx.children[child].geometry.boundingBox);
+      fbx.children[child].userData.obb = new OBB();
+      fbx.visible = false;
+      scene.add(fbx);
       
-      resolve(fbx)
+      resolve(fbx);
     });
   });
 }
@@ -138,29 +142,32 @@ function spawnCar() {
   activeCars.push(carInstance);
 }
 
-// Check for collision between car and character (Old collision detection)
-function checkCollision(car, character) {
-  const carBox = {
-    width: 1,
-    height: 0.1,
-    depth: 1
-  };
-  const characterBox = {
-    width: 1,
-    height: 0.1,
-    depth: 1
-  };
+// Check for collision between car and character
+function checkCollision(carInstance) {
 
-  const carPos = car.position;
-  const characterPos = character.position;
+  // This is used because there is a bug that would spawn the bounding box of the car
+  // on top of the player and immediately collide at the start of the game.
+  if (!isFirstFrame) {
+    // Updates the car and character bounding boxes. If character is jumping, doesn't update
+    // character box.
+    if (!jumping) {
+      character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb)
+    }
+    carInstance.children[child].userData.obb.copy(carInstance.children[child].geometry.userData.obb)
+    carInstance.children[child].userData.obb.applyMatrix4(carInstance.children[child].matrixWorld)
 
-  const xCollision = Math.abs(carPos.x - characterPos.x) < (carBox.width + characterBox.width) / 2;
-  const zCollision = Math.abs(carPos.z - characterPos.z) < (carBox.depth + characterBox.depth) / 2;
+    carInstance.children[child].userData.obb.center.z -= 2.5;
+  }
+  else {
+    isFirstFrame = false;
 
-  return xCollision && zCollision;
+    return false;
+  }
+
+  return character.children[0].userData.obb.intersectsOBB(carInstance.children[child].userData.obb)
+
 }
 
-let count = 0;
 
 // Update positions of all active cars and handle recycling
 function updateCars() {
@@ -169,45 +176,17 @@ function updateCars() {
     carInstance.position.z -= CAR_SPEED;
 
     if (character && carInstance.visible) {
+      
+      // Applying gravity to character
+      if (jumping) {
+        jumpGravityEffect()
+      }
       // Check for collision
-      
-      
-      if (count < 341) {
-        count += 1;
-      }
-
-      // Updates the car and character bounding boxes. If character is jumping, doesn't update
-      // character box.
-      if (!jumping) {
-        character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb)
-      }
-      carInstance.children[child].userData.obb.copy(carInstance.children[child].geometry.userData.obb)
-      //character.children[0].userData.obb.applyMatrix4(character.children[0].matrixWorld)
-      carInstance.children[child].userData.obb.applyMatrix4(carInstance.children[child].matrixWorld)
-
-      
-      // For drawing the outlines of the models for testing purposes.
-      if (count == 340) {
-        const bboxMaterial2 = new THREE.MeshBasicMaterial({ color: 0x00FF00, wireframe: true, depthTest: true  });
-        const bbox2 = new THREE.LineSegments(new THREE.BoxGeometry(
-          character.children[0].userData.obb.halfSize.x*2,
-          character.children[0].userData.obb.halfSize.y*2,
-          character.children[0].userData.obb.halfSize.z*2
-        ),
-          bboxMaterial2
-        );
-        bbox2.position.copy(character.children[0].userData.obb.center);
-			  scene.add(bbox2);
-      }
-
-      if (character.children[0].userData.obb.intersectsOBB(carInstance.children[child].userData.obb)) {
+      if (checkCollision(carInstance)) {
         console.log("here collision");
+        stumbleAnimation();
       }
 
-      // Old collision detection
-      // if (checkCollision(carInstance, character)) {
-      //   // Collision handling can be added here
-      // }
     }
 
     // Recycle car if it's passed the character
@@ -276,6 +255,9 @@ function loadCharacter() {
         c.geometry.boundingBox = box3;
         c.geometry.userData.obb = new OBB().fromBox3(c.geometry.boundingBox);
         c.userData.obb = new OBB();
+        c.userData.originalCenter = c.geometry.userData.obb.center.clone();
+        c.userData.gravity = -0.0012;
+        c.userData.velocity = CHAR_FALL_VELOCITY;
       }
     });
     
@@ -294,6 +276,12 @@ function loadCharacter() {
       const anim = animFbx.animations[0];
       actions.jump = mixer.clipAction(anim);
     });
+
+    // Setup stumble animation
+    loader.load(stumble, (animFbx) => {
+      const anim = animFbx.animations[0];
+      actions.stumble = mixer.clipAction(anim);
+    });
   });
 }
 
@@ -302,16 +290,26 @@ function jumpObbUpdater() {
 
   const obb = character.children[0].geometry.userData.obb;
   if (jumping) {
-    obb.center.y += 2;
+    obb.center.y += 3;
   }
   else {
-    obb.center.y -= 2;
+    character.children[0].userData.velocity = CHAR_FALL_VELOCITY;
+    obb.center.y = character.children[0].userData.originalCenter.y;
   }
 
-  character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb)
+  character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb);
 
 }
 
+// Handles the character's gravity by moving the bounding box accordingly when jumping.
+function jumpGravityEffect() {
+  const obb = character.children[0].geometry.userData.obb;
+
+  obb.center.y += character.children[0].userData.velocity;
+  character.children[0].userData.velocity += character.children[0].userData.gravity;
+
+  character.children[0].userData.obb.copy(character.children[0].geometry.userData.obb);
+}
 
 // Setup scene lighting
 function addLights() {
@@ -349,7 +347,7 @@ function animate() {
   if (groundMaterial && groundMaterial.map) {
     groundMaterial.map.offset.y -= RUNNING_SPEED * 0.1;
   }
-
+  
   renderer.render(scene, camera);
 }
 
@@ -360,14 +358,62 @@ function handleWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// Stumble animation for collision
+function stumbleAnimation() {
+  if (actions && actions.stumble) {
+    if (activeAction !== actions.stumble) {
+      // In case jump animation doesn't have time to end before stumble animation starts,
+      // we toggle jumping off and update the bounding box.
+      jumping = false;
+      jumpObbUpdater()
+
+      actions.stumble
+        .reset()
+        .setLoop(THREE.LoopOnce, 1);
+      actions.stumble.clampWhenFinished = true;
+      const crossFadeDuration = 0.1;
+      activeAction.crossFadeTo(actions.stumble, crossFadeDuration, true);
+
+      actions.stumble.play();
+      actions.stumble
+        .setEffectiveTimeScale(0.8)
+        .setEffectiveWeight(1.0);
+      activeAction = actions.stumble;
+
+      if (!mixer.listenerAdded) {
+          mixer.addEventListener('finished', () => {
+            if (activeAction === actions.jump) {
+              jumping = false;
+              jumpObbUpdater();
+              actions.run.reset();
+              activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
+              actions.run.play();
+              activeAction = actions.run;
+            }
+            else if (activeAction === actions.stumble) {
+              actions.run.reset();
+              activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
+              actions.run.play();
+              activeAction = actions.run;
+            }
+          });
+          mixer.listenerAdded = true;
+        }
+    }
+
+  }
+}
+
 // Handle keyboard input for jumping
 function handleKeyDown(e) {
   if (e.key === 'ArrowUp') {
     if (actions && actions.jump) {
-      if (activeAction !== actions.jump) {
+      if (activeAction !== actions.jump && activeAction !== actions.stumble) {
 
+        // Updating the character's hitbox when jumping
         jumping = true;
         jumpObbUpdater();
+
         actions.jump
           .reset()
           .setLoop(THREE.LoopOnce, 1);
@@ -379,7 +425,7 @@ function handleKeyDown(e) {
         actions.jump.play();
         actions.jump
           .setEffectiveTimeScale(0.8)
-          .setEffectiveWeight(1.0)
+          .setEffectiveWeight(1.0);
         activeAction = actions.jump; 
 
         // Handle transition back to running after jump
@@ -388,6 +434,12 @@ function handleKeyDown(e) {
             if (activeAction === actions.jump) {
               jumping = false;
               jumpObbUpdater();
+              actions.run.reset();
+              activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
+              actions.run.play();
+              activeAction = actions.run;
+            }
+            else if (activeAction === actions.stumble) {
               actions.run.reset();
               activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
               actions.run.play();
