@@ -34,7 +34,7 @@ const gameState = {
 let currentGameState = gameState.RUNNING;
 let currentSpeed = CAR_SPEED;
 const SLOWING_DISTANCE = 30; // Distance to start slowing down
-const TPOSE_DISTANCE = 15; // Distance to start T-pose
+const TPOSE_DISTANCE = 10; // Distance to start T-pose
 let tposeTimer = 10; // 10 seconds countdown
 let effectsGroup; // Group to hold all magical effects
 
@@ -173,6 +173,7 @@ function startTpose() {
   glowRing.visible = true;
   glowRing.scale.set(1, 1, 1);
   if (activeAction !== actions.tpose) {
+    actions.run.reset()
     actions.tpose.reset()
     activeAction.crossFadeTo(actions.tpose, 0.2, true)
     actions.tpose.play()
@@ -188,42 +189,45 @@ function startLevitation() {
   glowRing.visible = false;
   particleSystem.visible = true;
   
-  // Start rising animation
   if (character) {
     const startY = character.position.y;
-    const targetY = startY + 2;
-    const duration = 2000; // 2 seconds
+    const startZ = character.position.z;
+    const targetY = startY + 0.1; // Reduced height for more natural movement
+    const targetZ = wallInstance.position.z + 2; // Move beyond the wall
+    const duration = 3000; // Increased duration for smoother movement
     const startTime = Date.now();
-    
-    animateLevitation(startY,targetY, duration, startTime);
-  }
-}
 
-function animateLevitation(startY, targetY, duration, startTime) {
+    const levitationAnimation = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      character.position.y = startY + (targetY - startY) * progress;
-      character.rotation.y += 0.02;
+      // First move up, then forward
+      const verticalProgress = progress < 0.3 ? progress / 0.3 : 1;
+      const forwardProgress = progress < 0.3 ? 0 : (progress - 0.3) / 0.7;
+      
+      // Update positions with eased movements
+      character.position.y = startY + (targetY - startY) * easeInOut(verticalProgress);
+      character.position.z = startZ + (targetZ - startZ) * easeInOut(forwardProgress);
+      
       
       if (progress < 1) {
-        requestAnimationFrame(animateLevitation);
+        requestAnimationFrame(levitationAnimation);
       } else {
         endGame();
       }
+    };
+    
+    levitationAnimation();
+  }
+}
+
+// Add easing function for smoother motion
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 }
 
 function endGame() {
-  currentGameState = gameState.ENDING;
-  particleSystem.visible = false;
-  flashPlane.visible = true;
-  flashPlane.material.opacity = 0;
   
-  // Add any game end logic here
-  setTimeout(() => {
-    // Transition to next level or end screen
-    console.log('Game Complete!');
-  }, 1000);
 }
 
 onUnmounted(() => {
@@ -294,6 +298,7 @@ function updateWall() {
       if (distanceToWall < SLOWING_DISTANCE) {
         currentGameState = gameState.SLOWING;
       }
+      wallInstance.position.z -= currentSpeed;
       break;
       
     case gameState.SLOWING:
@@ -305,21 +310,23 @@ function updateWall() {
       );
       
       if (distanceToWall < TPOSE_DISTANCE) {
+        currentSpeed = 0; // Stop all movement
         startTpose();
+      } else {
+        wallInstance.position.z -= currentSpeed;
       }
       break;
       
     case gameState.TPOSE:
-      // Update timer
-      tposeTimer -= 1/60; // Assuming 60fps
+      // Wall and everything stays still
+      // Only update timer
+      tposeTimer -= 1/60;
       if (tposeTimer <= 0) {
+        console.log('time!!!!!')
         startLevitation();
       }
       break;
   }
-
-  // Move wall at current speed
-  wallInstance.position.z -= currentSpeed;
 }
 
 let shouldSpawnCars = true;
@@ -530,8 +537,10 @@ function animate() {
   updateWall()
   updateMagicalEffects();
   // Update ground texture scroll
-  if (groundMaterial && groundMaterial.map) {
-    groundMaterial.map.offset.y -= RUNNING_SPEED * 0.1;
+  if (groundMaterial && groundMaterial.map && 
+      currentGameState !== gameState.TPOSE && 
+      currentGameState !== gameState.LEVITATING) {
+    groundMaterial.map.offset.y -= currentSpeed * 0.1;
   }
 
   renderer.render(scene, camera);
