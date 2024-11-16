@@ -3,7 +3,7 @@ import MainLayout from "@/layouts/MainLayout.vue";
 import { Back, RefreshLeft, Timer } from "@element-plus/icons-vue"
 import { watch, ref } from "vue";
 import { useRouter } from "vue-router";
-import { jumpDetection } from "./GameView.vue";
+import { initKinectron } from "@/utils/jump";
 
 const router = useRouter();
 const kinectAddress = ref("");
@@ -70,11 +70,7 @@ const connectKinect = () => {
   //   configured.value = 0;
   // }
 
-  kinectron = new Kinectron(kinectAddress.value);
-  kinectron.setKinectType("windows");
-  kinectron.makeConnection();
-  kinectron.startTrackedBodies(jumpDetection);
-  
+  //initKinectron(kinectAddress);
 
   if(configured.value) {
     configured.value = 0;

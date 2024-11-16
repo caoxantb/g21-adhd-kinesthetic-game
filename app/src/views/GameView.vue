@@ -15,6 +15,8 @@ import groundTexture from '@/assets/game/roadtexture.png'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+//import { jumpDetection } from '@/utils/jump';
+
 const canvasRef = ref(null);
 
 // Core ThreeJS variables
@@ -34,6 +36,7 @@ const NUMBER_OF_CARS = 5;
 const CAR_SPAWN_DISTANCE = 120; // Distance ahead of player where cars spawn
 const CAR_SPEED = 0.35;
 
+let kinectron = null;
 let basehead = null;
 let jumping = false;
 
@@ -47,6 +50,7 @@ onMounted(() => {
   initializeCarPool();
   addLights()
   createGroundSegments();
+  initKinectron();
   window.addEventListener("resize", handleWindowResize);
   window.addEventListener("keydown", handleKeyDown);
 });
@@ -316,49 +320,64 @@ function handleKeyDown(e) {
   }
 }
 
-export function jumpDetection(body) {
+function initKinectron() {
+  // define and create an instance of kinectron
+  kinectron = new Kinectron("192.168.56.1");
+  
+  // Set kinect type to "azure" or "windows"
+  kinectron.setKinectType("windows");
+
+  // connect with application over peer
+  kinectron.makeConnection();
+
+  // request all tracked bodies and pass data to your callback
+  kinectron.startTrackedBodies(jumpDetection);
+}
+
+function jumpDetection(body) {
+  var height = 500;
   var head = body.joints[kinectron.HEAD];
 
-  if(basehead === null) {
-    basehead = head.depthY*height;
-  }
-
-  if(!jumping && basehead - head.depthY*height >= 50) {
-    jumping = true;
-    console.log("JUMP DETECTED!!!!!");
-    if (actions && actions.jump) {
-      if (activeAction !== actions.jump) {
-        actions.jump
-          .reset()
-          .setLoop(THREE.LoopOnce, 1);
-        actions.jump.clampWhenFinished = true;
-
-        const crossFadeDuration = 0.1;
-        activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
-        
-        actions.jump.play();
-        actions.jump
-          .setEffectiveTimeScale(0.8)
-          .setEffectiveWeight(1.0)
-        activeAction = actions.jump; 
-
-        // Handle transition back to running after jump
-        if (!mixer.listenerAdded) {
-          mixer.addEventListener('finished', () => {
-            if (activeAction === actions.jump) {
-              actions.run.reset();
-              activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
-              actions.run.play();
-              activeAction = actions.run;
-            }
-          });
-          mixer.listenerAdded = true;
-        }
-      }
+    if(basehead === null) {
+        basehead = head.depthY*height;
     }
-  } else if(jumping && basehead - head.depthY*height < 50) {
-    jumping = false;
-  }
+
+    if(!jumping && basehead - head.depthY*height >= 50) {
+        jumping = true;
+        console.log("JUMP DETECTED!!!!!");
+        if (actions && actions.jump) {
+          if (activeAction !== actions.jump) {
+            actions.jump
+              .reset()
+              .setLoop(THREE.LoopOnce, 1);
+            actions.jump.clampWhenFinished = true;
+
+            const crossFadeDuration = 0.1;
+            activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
+            
+            actions.jump.play();
+            actions.jump
+              .setEffectiveTimeScale(0.8)
+              .setEffectiveWeight(1.0)
+            activeAction = actions.jump; 
+
+            // Handle transition back to running after jump
+            if (!mixer.listenerAdded) {
+              mixer.addEventListener('finished', () => {
+                if (activeAction === actions.jump) {
+                  actions.run.reset();
+                  activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
+                  actions.run.play();
+                  activeAction = actions.run;
+                }
+              });
+              mixer.listenerAdded = true;
+            }
+          }
+        }
+    } else if(jumping && basehead - head.depthY*height < 50) {
+        jumping = false;
+    }
 }
 </script>
 
