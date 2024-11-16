@@ -8,9 +8,11 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
 import jump from '@/assets/game/animations/jump.fbx'
 import run from '@/assets/game/animations/Running.fbx'
+import tpose from '@/assets/game/animations/T-Pose.fbx'
 import michelle from '@/assets/game/michelle.fbx'
 import car from '@/assets/game/porsche.fbx'
 
+import wall from '@/assets/game/tposewall.fbx'
 import groundTexture from '@/assets/game/roadtexture.png'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -21,9 +23,25 @@ const canvasRef = ref(null);
 let scene, camera, renderer, character, mixer, activeAction, controls, groundMaterial;
 let actions = {} // Stores character animations
 
+const gameState = {
+  RUNNING: 'running',
+  SLOWING: 'slowing',
+  TPOSE: 'tpose',
+  LEVITATING: 'levitating',
+  ENDING: 'ending'
+};
+
+let currentGameState = gameState.RUNNING;
+let currentSpeed = CAR_SPEED;
+const SLOWING_DISTANCE = 30; // Distance to start slowing down
+const TPOSE_DISTANCE = 15; // Distance to start T-pose
+let tposeTimer = 10; // 10 seconds countdown
+let effectsGroup; // Group to hold all magical effects
+
 // Ground-related constants
 let groundTiles = []; 
 const RUNNING_SPEED = 0.1;
+const MIN_SPEED = 0.05;
 const GROUND_SEGMENT_LENGTH = 100;
 const NUMBER_OF_SEGMENTS = 3;
 
@@ -32,7 +50,19 @@ let carsPool = []; // Pool of available cars for reuse
 let activeCars = []; // Currently active cars in the scene
 const NUMBER_OF_CARS = 5;
 const CAR_SPAWN_DISTANCE = 120; // Distance ahead of player where cars spawn
-const CAR_SPEED = 0.35;
+const CAR_SPEED = 0.5;
+
+// Wall-related variables
+let wallInstance = null;
+let isWallSpawned = false;
+let passedCarsCount = 0;
+const CARS_BEFORE_WALL = 1;
+const WALL_SPAWN_DISTANCE = 100;
+
+let glowRing;
+let particleSystem;
+let flashPlane;
+
 
 // Starting position for the character
 let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
@@ -40,13 +70,161 @@ let characterDefaultPosition = { x: 0, y: -1.5, z: -2 }
 onMounted(() => {
   initThreeJS();
   loadCharacter();
+  loadWall();
+  createMagicalEffects();
   animate(); 
   initializeCarPool();
-  addLights()
+  addLights();
   createGroundSegments();
   window.addEventListener("resize", handleWindowResize);
   window.addEventListener("keydown", handleKeyDown);
 });
+
+function createMagicalEffects() {
+  effectsGroup = new THREE.Group();
+  
+  // Create glow ring
+  const ringGeometry = new THREE.TorusGeometry(1, 0.1, 16, 32);
+  const ringMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.5
+  });
+  glowRing = new THREE.Mesh(ringGeometry, ringMaterial);
+  glowRing.visible = false;
+  effectsGroup.add(glowRing);
+
+  // Create particle system
+  const particleGeometry = new THREE.BufferGeometry();
+  const particleCount = 100;
+  const positions = new Float32Array(particleCount * 3);
+  
+  for(let i = 0; i < particleCount; i++) {
+    const angle = (i / particleCount) * Math.PI * 2;
+    const radius = 1;
+    positions[i * 3] = Math.cos(angle) * radius;
+    positions[i * 3 + 1] = 0;
+    positions[i * 3 + 2] = Math.sin(angle) * radius;
+  }
+  
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  
+  const particleMaterial = new THREE.PointsMaterial({
+    color: 0x00ffff,
+    size: 0.1,
+    transparent: true,
+    opacity: 0.8
+  });
+  
+  particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+  particleSystem.visible = false;
+  effectsGroup.add(particleSystem);
+
+  // Create flash plane
+  const flashGeometry = new THREE.PlaneGeometry(10, 10);
+  const flashMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide
+  });
+  flashPlane = new THREE.Mesh(flashGeometry, flashMaterial);
+  flashPlane.position.z = -1;
+  flashPlane.visible = false;
+  effectsGroup.add(flashPlane);
+
+  scene.add(effectsGroup);
+}
+
+function updateMagicalEffects() {
+  if (!character || !effectsGroup) return;
+
+  // Update effects position to follow character
+  effectsGroup.position.copy(character.position);
+  
+  switch(currentGameState) {
+    case gameState.TPOSE:
+      // Pulse glow ring
+      if (glowRing.visible) {
+        glowRing.scale.multiplyScalar(1.01);
+        glowRing.material.opacity = 0.5 + Math.sin(Date.now() * 0.003) * 0.2;
+      }
+      break;
+      
+    case gameState.LEVITATING:
+      // Rotate and rise particles
+      if (particleSystem.visible) {
+        particleSystem.rotation.y += 0.02;
+        particleSystem.position.y += 0.01;
+      }
+      break;
+      
+    case gameState.ENDING:
+      // Flash effect
+      if (flashPlane.visible) {
+        flashPlane.material.opacity = Math.min(flashPlane.material.opacity + 0.05, 1);
+      }
+      break;
+  }
+}
+
+function startTpose() {
+  currentGameState = gameState.TPOSE;
+  glowRing.visible = true;
+  glowRing.scale.set(1, 1, 1);
+  if (activeAction !== actions.tpose) {
+    actions.tpose.reset()
+    activeAction.crossFadeTo(actions.tpose, 0.2, true)
+    actions.tpose.play()
+    actions.tpose
+        .setEffectiveTimeScale(0.8)
+        .setEffectiveWeight(1.0)
+    activeAction = actions.tpose;
+  }
+}
+
+function startLevitation() {
+  currentGameState = gameState.LEVITATING;
+  glowRing.visible = false;
+  particleSystem.visible = true;
+  
+  // Start rising animation
+  if (character) {
+    const startY = character.position.y;
+    const targetY = startY + 2;
+    const duration = 2000; // 2 seconds
+    const startTime = Date.now();
+    
+    animateLevitation(startY,targetY, duration, startTime);
+  }
+}
+
+function animateLevitation(startY, targetY, duration, startTime) {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      character.position.y = startY + (targetY - startY) * progress;
+      character.rotation.y += 0.02;
+      
+      if (progress < 1) {
+        requestAnimationFrame(animateLevitation);
+      } else {
+        endGame();
+      }
+}
+
+function endGame() {
+  currentGameState = gameState.ENDING;
+  particleSystem.visible = false;
+  flashPlane.visible = true;
+  flashPlane.material.opacity = 0;
+  
+  // Add any game end logic here
+  setTimeout(() => {
+    // Transition to next level or end screen
+    console.log('Game Complete!');
+  }, 1000);
+}
 
 onUnmounted(() => {
   window.removeEventListener("resize", handleWindowResize);
@@ -73,6 +251,111 @@ function initThreeJS() {
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.target.set(0, 1, -2);
+}
+
+function loadWall() {
+  const fbxLoader = new FBXLoader();
+  fbxLoader.load(wall, (fbx) => {
+    wallInstance = fbx;
+    wallInstance.scale.setScalar(0.009); // Adjust scale as needed
+    
+    // Rotate the wall 90 degrees around the Y-axis
+    wallInstance.rotation.y = Math.PI / 2
+    wallInstance.traverse(c => {
+      c.castShadow = true;
+    });
+    wallInstance.visible = false;
+    scene.add(wallInstance);
+  });
+}
+
+// Spawn the wall at a specific position
+function spawnWall() {
+  if (!wallInstance || isWallSpawned) return;
+  
+  wallInstance.position.set(
+    0, // x position (center)
+    1, // y position (ground level)
+    character.position.z + WALL_SPAWN_DISTANCE // z position (ahead of character)
+  );
+  
+  wallInstance.visible = true;
+  isWallSpawned = true;
+}
+
+// Update wall position and check for collision
+function updateWall() {
+  if (!wallInstance || !wallInstance.visible || !character) return;
+
+  const distanceToWall = wallInstance.position.z - character.position.z;
+  
+  switch(currentGameState) {
+    case gameState.RUNNING:
+      if (distanceToWall < SLOWING_DISTANCE) {
+        currentGameState = gameState.SLOWING;
+      }
+      break;
+      
+    case gameState.SLOWING:
+      // Gradually slow down
+      currentSpeed = THREE.MathUtils.lerp(
+        currentSpeed,
+        MIN_SPEED,
+        0.05
+      );
+      
+      if (distanceToWall < TPOSE_DISTANCE) {
+        startTpose();
+      }
+      break;
+      
+    case gameState.TPOSE:
+      // Update timer
+      tposeTimer -= 1/60; // Assuming 60fps
+      if (tposeTimer <= 0) {
+        startLevitation();
+      }
+      break;
+  }
+
+  // Move wall at current speed
+  wallInstance.position.z -= currentSpeed;
+}
+
+let shouldSpawnCars = true;
+
+function updateCars() {
+  for (let i = activeCars.length - 1; i >= 0; i--) {
+    const carInstance = activeCars[i];
+    // Only move cars if we're not in T-pose
+    if (currentGameState !== gameState.TPOSE && currentGameState !== gameState.LEVITATING) {
+      carInstance.position.z -= currentSpeed; // Use currentSpeed instead of CAR_SPEED
+    }
+
+    if (character && carInstance.visible) {
+      if (checkCollision(carInstance, character)) {
+        // Collision handling can be added here
+      }
+    }
+
+    // Recycle car if it's passed the character
+    if (carInstance.position.z < character.position.z - 5) {
+      carInstance.visible = false;
+      activeCars.splice(i, 1);
+      carsPool.push(carInstance);
+      
+      passedCarsCount++;
+      
+      if (passedCarsCount === CARS_BEFORE_WALL && !isWallSpawned) {
+        spawnWall();
+        shouldSpawnCars = false; // Stop spawning new cars
+      }
+      
+      if (carsPool.length > 0 && shouldSpawnCars) {
+        spawnCar();
+      }
+    }
+  }
 }
 
 // Create a single car instance and add it to the scene
@@ -140,29 +423,7 @@ function checkCollision(car, character) {
 }
 
 // Update positions of all active cars and handle recycling
-function updateCars() {
-  for (let i = activeCars.length - 1; i >= 0; i--) {
-    const carInstance = activeCars[i];
-    carInstance.position.z -= CAR_SPEED;
 
-    if (character && carInstance.visible) {
-      if (checkCollision(carInstance, character)) {
-        // Collision handling can be added here
-      }
-    }
-
-    // Recycle car if it's passed the character
-    if (carInstance.position.z < character.position.z - 5) {
-      carInstance.visible = false;
-      activeCars.splice(i, 1);
-      carsPool.push(carInstance);
-      
-      if (carsPool.length > 0) {
-        spawnCar();
-      }
-    }
-  }
-}
 
 // Create the scrolling ground segments
 function createGroundSegments() {
@@ -228,6 +489,11 @@ function loadCharacter() {
       const anim = animFbx.animations[0];
       actions.jump = mixer.clipAction(anim);
     });
+
+    loader.load(tpose, (animFbx) => {
+      const anim = animFbx.animations[0];
+      actions.tpose = mixer.clipAction(anim);
+    });
   });
 }
 
@@ -261,7 +527,8 @@ function animate() {
     mixer.update(0.016); // Update animations (assuming 60fps)
   }
   updateCars();
-
+  updateWall()
+  updateMagicalEffects();
   // Update ground texture scroll
   if (groundMaterial && groundMaterial.map) {
     groundMaterial.map.offset.y -= RUNNING_SPEED * 0.1;
