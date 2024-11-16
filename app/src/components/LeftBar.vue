@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, ref, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 
 import clock from "@/assets/icons/clock.png";
 import coin from "@/assets/icons/coin.png";
