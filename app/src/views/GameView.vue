@@ -9,6 +9,7 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import jump from '@/assets/game/animations/jump.fbx'
 import run from '@/assets/game/animations/Running.fbx'
 import tpose from '@/assets/game/animations/T-Pose.fbx'
+import idle from '@/assets/game/animations/Idle.fbx'
 import michelle from '@/assets/game/michelle.fbx'
 import car from '@/assets/game/porsche.fbx'
 
@@ -22,6 +23,7 @@ const canvasRef = ref(null);
 // Core ThreeJS variables
 let scene, camera, renderer, character, mixer, activeAction, controls, groundMaterial;
 let actions = {} // Stores character animations
+let tposeAllowed = false
 
 const gameState = {
   RUNNING: 'running',
@@ -174,13 +176,9 @@ function startTpose() {
   glowRing.scale.set(1, 1, 1);
   if (activeAction !== actions.tpose) {
     actions.run.reset()
-    actions.tpose.reset()
-    activeAction.crossFadeTo(actions.tpose, 0.2, true)
-    actions.tpose.play()
-    actions.tpose
-        .setEffectiveTimeScale(0.8)
-        .setEffectiveWeight(1.0)
-    activeAction = actions.tpose;
+    activeAction.crossFadeTo(actions.idle, 0.2, true)
+    actions.idle.play()
+    activeAction = actions.idle;
   }
 }
 
@@ -311,7 +309,8 @@ function updateWall() {
       
       if (distanceToWall < TPOSE_DISTANCE) {
         currentSpeed = 0; // Stop all movement
-        startTpose();
+        tposeAllowed = true
+        startTpose()
       } else {
         wallInstance.position.z -= currentSpeed;
       }
@@ -491,6 +490,11 @@ function loadCharacter() {
       scene.add(character)
     });
 
+    loader.load(idle, (animFbx) => {
+      const anim = animFbx.animations[0];
+      actions.idle = mixer.clipAction(anim);
+    })
+
     // Setup jump animation
     loader.load(jump, (animFbx) => {
       const anim = animFbx.animations[0];
@@ -555,6 +559,17 @@ function handleWindowResize() {
 
 // Handle keyboard input for jumping
 function handleKeyDown(e) {
+  if (e.key === 't') {
+    if (tposeAllowed) {
+      activeAction.reset()
+      activeAction.crossFadeTo(actions.tpose, 0.2, true)
+        actions.tpose.play()
+        actions.tpose
+            .setEffectiveTimeScale(0.8)
+            .setEffectiveWeight(1.0)
+        activeAction = actions.tpose;
+    }
+  }
   if (e.key === 'ArrowUp') {
     if (actions && actions.jump) {
       if (activeAction !== actions.jump) {
