@@ -35,8 +35,8 @@ const gameState = {
 
 let currentGameState = gameState.RUNNING;
 let currentSpeed = CAR_SPEED;
-const SLOWING_DISTANCE = 30; // Distance to start slowing down
-const TPOSE_DISTANCE = 10; // Distance to start T-pose
+const SLOWING_DISTANCE = 50; // Distance to start slowing down
+const TPOSE_DISTANCE = 12; // Distance to start T-pose
 let tposeTimer = 10; // 10 seconds countdown
 let effectsGroup; // Group to hold all magical effects
 
@@ -58,7 +58,7 @@ const CAR_SPEED = 0.5;
 let wallInstance = null;
 let isWallSpawned = false;
 let passedCarsCount = 0;
-const CARS_BEFORE_WALL = 1;
+const CARS_BEFORE_WALL = 2;
 const WALL_SPAWN_DISTANCE = 100;
 
 let glowRing;
@@ -301,6 +301,7 @@ function updateWall() {
       
     case gameState.SLOWING:
       // Gradually slow down
+      actions.run.setEffectiveTimeScale(0.8)
       currentSpeed = THREE.MathUtils.lerp(
         currentSpeed,
         MIN_SPEED,
