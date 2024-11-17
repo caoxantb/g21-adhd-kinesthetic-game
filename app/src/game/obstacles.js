@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import yellowcar from '@/assets/game/models/car1.glb'
-import redcar from '@/assets/game/models/car2.glb'
-import browncar from '@/assets/game/models/car3.glb'
+import car1 from '@/assets/game/models/car1.glb'
+import car2 from '@/assets/game/models/car2.glb'
+import car3 from '@/assets/game/models/car3.glb'
 
 export default class ObstacleSystem {
     constructor(scene) {
@@ -11,7 +11,7 @@ export default class ObstacleSystem {
         this.obstacles = [];
         this.activeObstacles = [];
         this.obstacleModels = [
-            yellowcar, redcar, browncar
+            car1, car2
             // Add more obstacle model paths as needed
         ];
         this.modelPool = new Map();
@@ -22,12 +22,11 @@ export default class ObstacleSystem {
 
         this.numberOfCarsSpawned = 0
         
-        this.activePhaseDuration = 40;
+        this.activePhaseDuration = 70;
         this.carTravelTime = Math.abs(this.despawnDistance - this.spawnDistance) / (100 * 0.5);
-        this.targetNumberOfCars = Math.floor(this.activePhaseDuration / (this.carTravelTime));
-        this.targetNumberOfCars = Math.ceil(this.targetNumberOfCars - this.targetNumberOfCars/2)
+        this.targetNumberOfCars = Math.floor((this.activePhaseDuration) / (2 * this.carTravelTime));
         console.log(this.targetNumberOfCars)
-        this.minSpawnInterval = this.carTravelTime * 1000;
+        this.minSpawnInterval = this.carTravelTime * 1000 - 1000;
         this.initialized = false;
         this.init();
     }
@@ -87,13 +86,13 @@ export default class ObstacleSystem {
         this.scene.add(obstacle);
         this.activeObstacles.push({
             model: obstacle,
-            speed: 0.5 
+            speed: 0.5
         });
         this.numberOfCarsSpawned ++
 
         this.lastSpawnTime = currentTime;
         // Set next spawn interval randomly
-        this.nextSpawnTime = currentTime + this.carTravelTime    
+        this.nextSpawnTime = currentTime + this.carTravelTime - 10
 
     }
 
