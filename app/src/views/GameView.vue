@@ -337,47 +337,55 @@ function initKinectron() {
 function jumpDetection(body) {
   var height = 500;
   var head = body.joints[kinectron.HEAD];
+  var neck = body.joints[kinectron.NECK];
 
-    if(basehead === null) {
-        basehead = head.depthY*height;
-    }
+  if(basehead === null) {
+    basehead = head.depthY*height;
+  }
 
-    if(!jumping && basehead - head.depthY*height >= 50) {
-        jumping = true;
-        console.log("JUMP DETECTED!!!!!");
-        if (actions && actions.jump) {
-          if (activeAction !== actions.jump) {
-            actions.jump
-              .reset()
-              .setLoop(THREE.LoopOnce, 1);
-            actions.jump.clampWhenFinished = true;
+  if(neck.depthY*height - head.depthY*height >= 50 || neck.depthY*height - head.depthY*height <= 20) {
+    console.log("WRONG POSITION!!!!!");
+    basehead = null;
+    return;
+  }
 
-            const crossFadeDuration = 0.1;
-            activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
-            
-            actions.jump.play();
-            actions.jump
-              .setEffectiveTimeScale(0.8)
-              .setEffectiveWeight(1.0)
-            activeAction = actions.jump; 
+  if(!jumping && basehead - head.depthY*height >= 50) {
+    jumping = true;
+    console.log("JUMP DETECTED!!!!!");
+    if (actions && actions.jump) {
+      if (activeAction !== actions.jump) {
+        actions.jump
+          .reset()
+          .setLoop(THREE.LoopOnce, 1);
+        actions.jump.clampWhenFinished = true;
 
-            // Handle transition back to running after jump
-            if (!mixer.listenerAdded) {
-              mixer.addEventListener('finished', () => {
-                if (activeAction === actions.jump) {
-                  actions.run.reset();
-                  activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
-                  actions.run.play();
-                  activeAction = actions.run;
-                }
-              });
-              mixer.listenerAdded = true;
+        const crossFadeDuration = 0.1;
+        activeAction.crossFadeTo(actions.jump, crossFadeDuration, true);
+        
+        actions.jump.play();
+        actions.jump
+          .setEffectiveTimeScale(0.8)
+          .setEffectiveWeight(1.0)
+        activeAction = actions.jump; 
+
+        // Handle transition back to running after jump
+        if (!mixer.listenerAdded) {
+          mixer.addEventListener('finished', () => {
+            if (activeAction === actions.jump) {
+              actions.run.reset();
+              activeAction.crossFadeTo(actions.run, crossFadeDuration, true);
+              actions.run.play();
+              activeAction = actions.run;
             }
-          }
+          });
+          mixer.listenerAdded = true;
         }
-    } else if(jumping && basehead - head.depthY*height < 50) {
-        jumping = false;
+      }
     }
+  }
+  else if(jumping && basehead - head.depthY*height < 50) {
+    jumping = false;
+  }
 }
 </script>
 
