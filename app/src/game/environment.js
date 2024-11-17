@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { useGameStore } from "@/stores/game";
+import ObstacleSystem from './obstacles';
 
 import ground from "@/assets/game/models/ground.glb";
 import obstacle from "@/assets/game/models/obstacle.glb";
@@ -16,6 +17,7 @@ export default class Environment {
     this.ground = new THREE.Object3D();
     this.groundClone = new THREE.Object3D();
     this.groundSize = 0;
+    this.currentSpeed = 100; 
 
     this.load();
   }
@@ -33,6 +35,9 @@ export default class Environment {
     this.groundClone.position.z = -(this.ground.position.z + this.groundSize);
     this.scene.add(this.groundClone);
 
+    this.obstacles = new ObstacleSystem(this.scene);
+    await this.obstacles.init();
+
     const listener = new THREE.AudioListener();
     this.scene.getObjectByName("camera").add(listener);
     this.sound = new THREE.Audio(listener);
@@ -44,15 +49,21 @@ export default class Environment {
   }
 
   active(speed, delta) {
+    // Update ground positions
     this.ground.position.z += speed * delta;
     this.groundClone.position.z += speed * delta;
 
+    // Ground loop logic
     if (this.ground.position.z > 250) {
-      this.ground.position.z = this.groundClone.position.z - this.groundSize;
+        this.ground.position.z = this.groundClone.position.z - this.groundSize;
+    }
+    if (this.groundClone.position.z > 250) {
+        this.groundClone.position.z = this.ground.position.z - this.groundSize;
     }
 
-    if (this.groundClone.position.z > 250) {
-      this.groundClone.position.z = this.ground.position.z - this.groundSize;
+    // Update obstacles if environment is fully loaded
+    if (this.obstacles) {
+        this.obstacles.update(delta, speed);
     }
   }
 
@@ -67,5 +78,9 @@ export default class Environment {
 
   playCoinSound() {
     this.sound.play();
+  }
+
+  cleanup() {
+    this.obstacles.cleanup();
   }
 }

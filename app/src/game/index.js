@@ -11,19 +11,26 @@ export default class Game {
   constructor(canvas) {
     this.store = new useGameStore();
     this.canvas = canvas;
-
+    
     this.clock = new THREE.Clock();
     this.speed = 100;
-
+    
+    // Block tracking
     this.currentBlock = 1;
-
-    // active, preparation, freezing, break
-    this.currentPhase = "active";
-    this.activeTime = 170;
-    this.preparetionTime = 10;
-    this.freezingTime = 15;
-    this.breakTime = 20;
-
+    this.totalBlocks = 4;
+    
+    // Phase tracking with durations (in seconds)
+    this.phases = {
+      active: { duration: 20, name: 'Active Phase' },
+      preparation: { duration: 5, name: 'Preparation Phase' },
+      freezing: { duration: 10, name: 'Freezing Phase' }, // Will increase per block
+      break: { duration: 7, name: 'Break Phase' }
+    };
+    
+    this.currentPhase = 'active';
+    this.phaseStartTime = 0;
+    this.phaseTimeRemaining = this.phases.active.duration;
+    
     this.init();
   }
 
@@ -86,6 +93,68 @@ export default class Game {
         clearInterval(this.interval);
       }
     }, 1000);
+
+    this.phaseStartTime = Date.now() / 1000;
+    // this.logGameState();
+    
+    // Set up phase timer
+    this.phaseInterval = setInterval(() => {
+      this.updatePhase();
+    }, 1000);
+  }
+
+  updatePhase() {
+    const currentTime = Date.now() / 1000;
+    const elapsedTime = currentTime - this.phaseStartTime;
+    this.phaseTimeRemaining = Math.max(0, this.phases[this.currentPhase].duration - elapsedTime);
+
+    if (this.phaseTimeRemaining <= 0) {
+        this.moveToNextPhase();
+    }
+
+    // this.logGameState();
+  }
+
+  moveToNextPhase() {
+    switch (this.currentPhase) {
+      case 'active':
+          this.currentPhase = 'preparation';
+          this.phaseTimeRemaining = this.phases.preparation.duration;
+          break;
+          
+      case 'preparation':
+          this.currentPhase = 'freezing';
+          // Increase freezing time based on block number (15s, 25s, 35s, 45s)
+          this.phases.freezing.duration = 10 + (this.currentBlock - 1) * 10;
+          this.phaseTimeRemaining = this.phases.freezing.duration;
+          this.startFreezingPhase();
+          break;
+          
+      case 'freezing':
+          this.currentPhase = 'break';
+          this.phaseTimeRemaining = this.phases.break.duration;
+          break;
+          
+      case 'break':
+          if (this.currentBlock < this.totalBlocks) {
+              this.currentBlock++;
+              this.currentPhase = 'active';
+              this.phaseTimeRemaining = this.phases.active.duration;
+          } else {
+              this.onGameCompleted();
+              return;
+          }
+          break;
+    }
+    
+    this.phaseStartTime = Date.now() / 1000;
+  }
+
+  logGameState() {
+    console.log(`Current Block: ${this.currentBlock}/${this.totalBlocks}`);
+    console.log(`Current Phase: ${this.phases[this.currentPhase].name}`);
+    console.log(`Time Remaining: ${Math.ceil(this.phaseTimeRemaining)}s`);
+    console.log('------------------------');
   }
 
   setupBlock() {}
@@ -106,7 +175,11 @@ export default class Game {
     }
   }
 
-  onGameCompleted() {}
+  onGameCompleted() {
+    console.log('Game Completed!');
+    clearInterval(this.phaseInterval);
+    // Additional completion logic can be added here
+  }
 
   active() {
     this.delta = this.clock.getDelta();
@@ -134,6 +207,13 @@ export default class Game {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  destroy() {
+    if (this.phaseInterval) {
+        clearInterval(this.phaseInterval);
+    }
+    // Add any other cleanup needed
   }
 
   async startAudioContext() {

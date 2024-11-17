@@ -6,7 +6,6 @@ import xbot from "@/assets/game/models/xbot.fbx";
 import running from "@/assets/game/animations/running.fbx";
 import jumping from "@/assets/game/animations/jumping.fbx";
 import standing from "@/assets/game/animations/standing.fbx";
-import stumbling from "@/assets/game/animations/stumbling.fbx";
 
 import jump from "@/assets/game/sounds/jump.wav";
 

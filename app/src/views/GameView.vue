@@ -20,7 +20,11 @@ onMounted(async () => {
   game = new Game(canvas.value);
 });
 
-onUnmounted(() => {});
+onUnmounted(() => {
+  if (game) {
+    game.destroy();
+  }
+});
 </script>
 
 <template>
