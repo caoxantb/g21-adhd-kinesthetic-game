@@ -3,6 +3,7 @@ import { useGameStore } from "@/stores/game";
 
 import Environment from "./environment";
 import Player from "./player";
+import WallSystem from "./wall" 
 
 import bgm from "@/assets/game/sounds/bgm.mp3";
 
@@ -18,9 +19,9 @@ export default class Game {
     this.phases = ["active", "preparation", "freezing", "break"];
     this.phaseDurations = {
       active: 10,      // seconds
-      preparation: 5,  // seconds
-      freezing: 10,     // seconds (can be adjusted dynamically)
-      break: 5         // seconds
+      preparation: 10,  // seconds
+      freezing: 15,     // seconds (can be adjusted dynamically)
+      break: 20         // seconds
     };
     this.currentPhase = this.phases[this.currentPhaseIndex];
     this.remainingTime = this.phaseDurations[this.currentPhase]; // Duration for the current phase
@@ -65,6 +66,8 @@ export default class Game {
 
     this.environment = new Environment(this.scene);
     this.player = new Player(this.scene);
+    this.wallSystem = new WallSystem(this.scene)
+    this.wallSystem.init()
     window.addEventListener("resize", this.onWindowResize.bind(this));
     window.addEventListener("click", () => this.startAudioContext(), { once: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -133,6 +136,7 @@ export default class Game {
 
   startPreparationPhase() {
     console.log('preparing')
+    this.wallSystem.spawnWall()
     this.currentPhase = "preparation";
     // Any setup needed for preparation phase
   }
@@ -154,6 +158,13 @@ export default class Game {
     this.player.active(this.delta);
   }
 
+  prepare() {
+    this.delta = this.clock.getDelta()
+    this.environment.active(this.speed, this.delta)
+    this.player.active(this.delta)
+    this.wallSystem.update(this.delta, this.speed)
+  }
+
   freeze() {
     this.delta = this.clock.getDelta();
     this.environment.freeze();
@@ -164,7 +175,7 @@ export default class Game {
     if (this.currentPhase === "active") {
       this.active();
     } else if (this.currentPhase === "preparation") {
-      this.active()
+      this.prepare()
     } else if (this.currentPhase === "freezing") {
       this.freeze();
     } else {

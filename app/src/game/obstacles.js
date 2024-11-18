@@ -22,8 +22,8 @@ export default class ObstacleSystem {
 
         this.numberOfCarsSpawned = 0
         
-        this.activePhaseDuration = 70;
-        this.carTravelTime = Math.abs(this.despawnDistance - this.spawnDistance) / (50 * 1.5);
+        this.activePhaseDuration = 10;
+        this.carTravelTime = Math.abs(this.despawnDistance - this.spawnDistance) / (20 * 1.8);
         this.targetNumberOfCars = Math.floor((this.activePhaseDuration) / (3 * this.carTravelTime));
         console.log(this.targetNumberOfCars)
         this.minSpawnInterval = this.carTravelTime * 1000 + 2000;
@@ -37,8 +37,8 @@ export default class ObstacleSystem {
             // Load actual models
             for (const modelPath of this.obstacleModels) {
                 try {
-                    const fbx = await loader.loadAsync(modelPath);
-                    const model = fbx.scene;
+                    const gltf = await loader.loadAsync(modelPath);
+                    const model = gltf.scene;
                     model.traverse(child => {
                         if (child.isMesh) {
                             child.castShadow = true;
@@ -86,7 +86,7 @@ export default class ObstacleSystem {
         this.scene.add(obstacle);
         this.activeObstacles.push({
             model: obstacle,
-            speed: 1.5
+            speed: 1.8
         });
         this.numberOfCarsSpawned ++
 
@@ -106,6 +106,7 @@ export default class ObstacleSystem {
 
             // Remove if past despawn point
             if (obstacle.model.position.z > this.despawnDistance) {
+                console.log('obstacle despawned')
                 this.scene.remove(obstacle.model);
                 this.activeObstacles.splice(i, 1);
             }
