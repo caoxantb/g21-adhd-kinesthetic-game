@@ -3,9 +3,9 @@ import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 import { useGameStore } from "@/stores/game";
 
 import xbot from "@/assets/game/models/michelle.fbx";
-import running from "@/assets/game/animations/running.fbx";
-import jumping from "@/assets/game/animations/jumping.fbx";
-import standing from "@/assets/game/animations/standing.fbx";
+import running from "@/assets/game/animations/Running.fbx";
+import jumping from "@/assets/game/animations/Jump.fbx";
+import standing from "@/assets/game/animations/Idle.fbx";
 
 import jump from "@/assets/game/sounds/jump.wav";
 
