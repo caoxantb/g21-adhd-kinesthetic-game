@@ -22,9 +22,9 @@ export default class ObstacleSystem {
 
         this.numberOfCarsSpawned = 0
         
-        this.activePhaseDuration = 10;
+        this.activePhaseDuration = 20;
         this.carTravelTime = Math.abs(this.despawnDistance - this.spawnDistance) / (20 * 1.8);
-        this.targetNumberOfCars = Math.floor((this.activePhaseDuration) / (3 * this.carTravelTime));
+        this.targetNumberOfCars = Math.floor((this.activePhaseDuration) / (2 * this.carTravelTime));
         console.log(this.targetNumberOfCars)
         this.minSpawnInterval = this.carTravelTime * 1000 + 2000;
         this.initialized = false;

@@ -6,9 +6,9 @@ import tposewall from '@/assets/game/models/tposewall.fbx'
 export default class WallSystem {
     constructor(scene) {
         this.scene = scene
-        this.spawnDistance = -170
-        this.despawnDistance = 70
-        this.stoppingDistance = 40
+        this.spawnDistance = -190
+        this.despawnDistance = 90
+        this.wall = null
     }
 
     async init() {
@@ -31,13 +31,11 @@ export default class WallSystem {
         this.model.position.set(0,5.5, this.spawnDistance)
         this.model.scale.set(0.02, 0.02, 0.02)
         this.model.rotation.y = Math.PI/2
-        console.log(this.model.position.y)
         this.scene.add(this.model)
     }
 
     update(delta, gameSpeed) {
-        // if (this.model.position.z < this.stoppingDistance)
-            this.model.position.z += gameSpeed * delta
+        this.model.position.z += gameSpeed * delta
         
         if (this.model.position.z > this.despawnDistance) {
             this.scene.remove(this.model)

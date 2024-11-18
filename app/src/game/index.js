@@ -18,11 +18,14 @@ export default class Game {
     this.currentPhaseIndex = 0; // To track the current phase in each block
     this.phases = ["active", "preparation", "freezing", "break"];
     this.phaseDurations = {
-      active: 10,      // seconds
+      active: 5,      // seconds
       preparation: 10,  // seconds
       freezing: 15,     // seconds (can be adjusted dynamically)
       break: 20         // seconds
     };
+    this.isTposing = false;
+    this.tposeStartTime = 0;
+    this.tposeDuration = 10000;
     this.currentPhase = this.phases[this.currentPhaseIndex];
     this.remainingTime = this.phaseDurations[this.currentPhase]; // Duration for the current phase
     this.init();
@@ -69,6 +72,7 @@ export default class Game {
     this.wallSystem = new WallSystem(this.scene)
     this.wallSystem.init()
     window.addEventListener("resize", this.onWindowResize.bind(this));
+    window.addEventListener('keydown', (e) => this.handleKeyPress(e));
     window.addEventListener("click", () => this.startAudioContext(), { once: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -144,6 +148,8 @@ export default class Game {
   startBreakPhase() {
     this.currentPhase = "break";
     console.log('break')
+    this.wallSystem.cleanup()
+    this.environment.cleanup()
     // Any setup needed for break phase
   }
 
@@ -165,10 +171,29 @@ export default class Game {
     this.wallSystem.update(this.delta, this.speed)
   }
 
+  startTpose() {
+    this.isTposing = true;
+    this.tposeStartTime = Date.now();
+    this.player.startTpose();
+  }
+
+  updateTpose() {
+    if (!this.isTposing) return;
+
+    const elapsed = Date.now() - this.tposeStartTime;
+    if (elapsed >= this.tposeDuration) {
+      this.player.startLevitation();
+      this.isTposing = false;
+    }
+  }
+
   freeze() {
     this.delta = this.clock.getDelta();
     this.environment.freeze();
     this.player.freeze(this.delta);
+    if (this.isTposing) {
+      this.updateTpose();
+    }
   }
 
   animate() {
@@ -179,7 +204,7 @@ export default class Game {
     } else if (this.currentPhase === "freezing") {
       this.freeze();
     } else {
-      this.freeze()
+      // this.break()
     }
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(() => this.animate());
@@ -189,6 +214,12 @@ export default class Game {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  handleKeyPress(event) {
+    if (event.key === 't' && this.currentPhase === 'freezing' && !this.isTposing) {
+      this.startTpose();
+    }
   }
 
   async startAudioContext() {
