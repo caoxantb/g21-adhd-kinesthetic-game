@@ -11,47 +11,37 @@ export default class Game {
   constructor(canvas) {
     this.store = new useGameStore();
     this.canvas = canvas;
-    
     this.clock = new THREE.Clock();
-    this.speed = 40;
-    
-    // Block tracking
+    this.speed = 20;
     this.currentBlock = 1;
-    this.totalBlocks = 4;
-    
-    // Phase tracking with durations (in seconds)
-    this.phases = {
-      active: { duration: 20, name: 'Active Phase' },
-      preparation: { duration: 5, name: 'Preparation Phase' },
-      freezing: { duration: 10, name: 'Freezing Phase' }, // Will increase per block
-      break: { duration: 7, name: 'Break Phase' }
+    this.currentPhaseIndex = 0; // To track the current phase in each block
+    this.phases = ["active", "preparation", "freezing", "break"];
+    this.phaseDurations = {
+      active: 10,      // seconds
+      preparation: 5,  // seconds
+      freezing: 10,     // seconds (can be adjusted dynamically)
+      break: 5         // seconds
     };
-    
-    this.currentPhase = 'active';
-    this.phaseStartTime = 0;
-    this.phaseTimeRemaining = this.phases.active.duration;
-    
+    this.currentPhase = this.phases[this.currentPhaseIndex];
+    this.remainingTime = this.phaseDurations[this.currentPhase]; // Duration for the current phase
     this.init();
   }
 
   async init() {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color("#929292");
-
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
       precision: "mediump",
     });
-
     this.camera = new THREE.PerspectiveCamera(
       45,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000,
+      1000
     );
     this.camera.name = "camera";
-
     this.camera.position.set(0, 20, 85);
     this.camera.lookAt(0, 0, 0);
     this.camera.rotation.x = -30 * (Math.PI / 180);
@@ -59,14 +49,12 @@ export default class Game {
 
     const ambient = new THREE.AmbientLight(0xffffff, 2.5);
     this.scene.add(ambient);
-
     const light = new THREE.DirectionalLight(0xffffff, 2.5);
     light.position.set(0, 40, -10);
     this.scene.add(light);
 
     const listener = new THREE.AudioListener();
     this.camera.add(listener);
-
     this.sound = new THREE.Audio(listener);
     const audioLoader = new THREE.AudioLoader();
     const buffer = await audioLoader.loadAsync(bgm);
@@ -77,109 +65,87 @@ export default class Game {
 
     this.environment = new Environment(this.scene);
     this.player = new Player(this.scene);
-
-    window.addEventListener("resize", this.onWindowResize);
-    window.addEventListener("click", () => this.startAudioContext(), {
-      once: true,
-    });
-
+    window.addEventListener("resize", this.onWindowResize.bind(this));
+    window.addEventListener("click", () => this.startAudioContext(), { once: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.animate();
 
+    this.animate();
+    this.startGameLoop();
+  }
+
+  startGameLoop() {
     this.interval = setInterval(() => {
-      if (this.store.timePassed < this.store.duration) {
-        this.store.timePassed += 1000;
+      if (this.remainingTime > 0) {
+        this.remainingTime--;
       } else {
-        clearInterval(this.interval);
+        this.transitionToNextPhase();
       }
     }, 1000);
-
-    this.phaseStartTime = Date.now() / 1000;
-    // this.logGameState();
-    
-    // Set up phase timer
-    this.phaseInterval = setInterval(() => {
-      this.updatePhase();
-    }, 1000);
   }
 
-  updatePhase() {
-    const currentTime = Date.now() / 1000;
-    const elapsedTime = currentTime - this.phaseStartTime;
-    this.phaseTimeRemaining = Math.max(0, this.phases[this.currentPhase].duration - elapsedTime);
+  transitionToNextPhase() {
+    this.currentPhaseIndex = (this.currentPhaseIndex + 1) % this.phases.length;
+    this.currentPhase = this.phases[this.currentPhaseIndex];
+    this.remainingTime = this.phaseDurations[this.currentPhase];
 
-    if (this.phaseTimeRemaining <= 0) {
-        this.moveToNextPhase();
+    if (this.currentPhaseIndex === 0) { // New block begins
+      this.currentBlock++;
+      if (this.currentBlock > 4) {
+        this.onGameCompleted();
+      } else {
+        this.setupBlock();
+      }
     }
 
-    // this.logGameState();
-  }
-
-  moveToNextPhase() {
+    // Trigger phase-specific logic
     switch (this.currentPhase) {
-      case 'active':
-          this.currentPhase = 'preparation';
-          this.phaseTimeRemaining = this.phases.preparation.duration;
-          this.active()
-          break;
-          
-      case 'preparation':
-          this.currentPhase = 'freezing';
-          // Increase freezing time based on block number (15s, 25s, 35s, 45s)
-          this.phases.freezing.duration = 10 + (this.currentBlock - 1) * 10;
-          this.phaseTimeRemaining = this.phases.freezing.duration;
-          this.startFreezingPhase();
-          break;
-          
-      case 'freezing':
-          this.currentPhase = 'break';
-          this.phaseTimeRemaining = this.phases.break.duration;
-          break;
-          
-      case 'break':
-          if (this.currentBlock < this.totalBlocks) {
-              this.currentBlock++;
-              this.currentPhase = 'active';
-              this.phaseTimeRemaining = this.phases.active.duration;
-          } else {
-              this.onGameCompleted();
-              return;
-          }
-          break;
+      case "active":
+        this.startActivePhase();
+        break;
+      case "preparation":
+        this.startPreparationPhase();
+        break;
+      case "freezing":
+        this.startFreezingPhase();
+        break;
+      case "break":
+        this.startBreakPhase();
+        break;
     }
-    
-    this.phaseStartTime = Date.now() / 1000;
   }
 
-  logGameState() {
-    console.log(`Current Block: ${this.currentBlock}/${this.totalBlocks}`);
-    console.log(`Current Phase: ${this.phases[this.currentPhase].name}`);
-    console.log(`Time Remaining: ${Math.ceil(this.phaseTimeRemaining)}s`);
-    console.log('------------------------');
+  setupBlock() {
+    // Custom logic to reset or prepare for a new block
   }
 
-  setupBlock() {}
-
-  startActivePhase() {}
+  startActivePhase() {
+    this.currentPhase = "active";
+    console.log('active')
+    // Any setup needed for active phase
+  }
 
   startFreezingPhase() {
     this.currentPhase = "freezing";
+    console.log('freezing')
     this.player.beforeFreeze();
+    // Any setup needed for freezing phase
   }
 
-  onBlockCompleted() {
-    if (this.currentBlock < 4) {
-      this.currentBlock++;
-      this.setupBlock();
-    } else {
-      this.onGameCompleted();
-    }
+  startPreparationPhase() {
+    console.log('preparing')
+    this.currentPhase = "preparation";
+    // Any setup needed for preparation phase
+  }
+
+  startBreakPhase() {
+    this.currentPhase = "break";
+    console.log('break')
+    // Any setup needed for break phase
   }
 
   onGameCompleted() {
-    console.log('Game Completed!');
-    clearInterval(this.phaseInterval);
-    // Additional completion logic can be added here
+    clearInterval(this.interval);
+    // Logic for completing the game
   }
 
   active() {
@@ -197,8 +163,12 @@ export default class Game {
   animate() {
     if (this.currentPhase === "active") {
       this.active();
+    } else if (this.currentPhase === "preparation") {
+      this.active()
     } else if (this.currentPhase === "freezing") {
       this.freeze();
+    } else {
+      this.freeze()
     }
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(() => this.animate());
@@ -208,13 +178,6 @@ export default class Game {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  destroy() {
-    if (this.phaseInterval) {
-        clearInterval(this.phaseInterval);
-    }
-    // Add any other cleanup needed
   }
 
   async startAudioContext() {

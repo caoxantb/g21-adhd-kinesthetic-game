@@ -96,6 +96,16 @@ export default class Player {
     if (this.animationMixer) {
       this.animationMixer.update(delta);
     }
+    if (this.currentAnimation && this.currentAnimation !== this.runningAnimation) {
+      this.currentAnimation
+          .crossFadeTo(this.runningAnimation, 0.1, false)
+          .play();
+        this.currentAnimation = this.runningAnimation;
+    }
+  }
+
+  prepare() {
+    this.currentAnimation.setEffectiveTimeScale(0.6)
   }
 
   beforeFreeze() {

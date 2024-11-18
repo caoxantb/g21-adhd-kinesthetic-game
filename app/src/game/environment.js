@@ -67,6 +67,19 @@ export default class Environment {
     }
   }
 
+  slowDown(speed, delta) {
+    this.ground.position.z += (speed - 10) * delta;
+    this.groundClone.position.z += (speed - 10) * delta;
+
+    // Ground loop logic
+    if (this.ground.position.z > 250) {
+        this.ground.position.z = this.groundClone.position.z - this.groundSize;
+    }
+    if (this.groundClone.position.z > 250) {
+        this.groundClone.position.z = this.ground.position.z - this.groundSize;
+    }
+  }
+
   freeze() {}
 
   detectObstacleCollision() {}
