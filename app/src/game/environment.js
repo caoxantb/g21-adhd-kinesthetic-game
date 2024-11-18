@@ -17,7 +17,7 @@ export default class Environment {
     this.ground = new THREE.Object3D();
     this.groundClone = new THREE.Object3D();
     this.groundSize = 0;
-    this.currentSpeed = 100; 
+    this.currentSpeed = 50; 
 
     this.load();
   }

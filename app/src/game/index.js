@@ -13,7 +13,7 @@ export default class Game {
     this.canvas = canvas;
     
     this.clock = new THREE.Clock();
-    this.speed = 100;
+    this.speed = 40;
     
     // Block tracking
     this.currentBlock = 1;
@@ -120,6 +120,7 @@ export default class Game {
       case 'active':
           this.currentPhase = 'preparation';
           this.phaseTimeRemaining = this.phases.preparation.duration;
+          this.active()
           break;
           
       case 'preparation':

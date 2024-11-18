@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 import { useGameStore } from "@/stores/game";
 
-import xbot from "@/assets/game/models/xbot.fbx";
+import xbot from "@/assets/game/models/michelle.fbx";
 import running from "@/assets/game/animations/running.fbx";
 import jumping from "@/assets/game/animations/jumping.fbx";
 import standing from "@/assets/game/animations/standing.fbx";
@@ -28,7 +28,7 @@ export default class Player {
     this.player = await new FBXLoader().loadAsync(xbot);
     this.player.position.y = 0;
     this.player.position.z = 70;
-    this.player.scale.set(0.05, 0.05, 0.05);
+    this.player.scale.set(0.04, 0.04, 0.04);
     this.player.rotation.y = 180 * (Math.PI / 180);
     this.scene.add(this.player);
 
