@@ -36,6 +36,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ["@babylonjs/core", "three.js"]
+    exclude: ["@babylonjs/core", "three.js"],
   },
 });

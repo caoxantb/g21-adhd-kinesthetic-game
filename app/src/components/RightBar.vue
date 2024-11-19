@@ -49,7 +49,7 @@ function triggerJump() {
 
     <img class="skeleton" :src="skeleton" alt="" />
 
-    <el-button size="large" @click="triggerJump">Jump</el-button>
+    <!-- <el-button size="large" @click="triggerJump">Jump</el-button> -->
   </div>
 </template>
 

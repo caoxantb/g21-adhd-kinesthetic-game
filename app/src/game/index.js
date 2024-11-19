@@ -3,7 +3,7 @@ import { useGameStore } from "@/stores/game";
 
 import Environment from "./environment";
 import Player from "./player";
-import WallSystem from "./wall" 
+import WallSystem from "./wall";
 
 import bgm from "@/assets/game/sounds/bgm.mp3";
 
@@ -18,19 +18,17 @@ export default class Game {
     this.currentPhaseIndex = 0; // To track the current phase in each block
     this.phases = ["active", "preparation", "freezing", "break"];
     this.phaseDurations = {
-      active: 30,      // seconds
-      preparation: 10,  // seconds
-      freezing: 15,     // seconds (can be adjusted dynamically)
-      break: 20         // seconds
+      active: 170, // seconds
+      preparation: 10, // seconds
+      freezing: 15, // seconds (can be adjusted dynamically)
+      break: 20, // seconds
     };
-    this.isTposing = false;
-    this.tposeStartTime = 0;
-    this.tposeDuration = 10000;
 
     this.breakPhaseStartTime = 0;
     this.breakResetComplete = false;
     this.currentPhase = this.phases[this.currentPhaseIndex];
     this.remainingTime = this.phaseDurations[this.currentPhase]; // Duration for the current phase
+    this.levitationStarted = false;
     this.init();
   }
 
@@ -46,7 +44,7 @@ export default class Game {
       45,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000
+      1000,
     );
     this.camera.name = "camera";
     this.camera.position.set(0, 20, 85);
@@ -72,13 +70,15 @@ export default class Game {
 
     this.environment = new Environment(this.scene);
     this.player = new Player(this.scene);
-    this.wallSystem = new WallSystem(this.scene)
-    this.wallSystem.init()
+    this.wallSystem = new WallSystem(this.scene, this);
+    this.wallSystem.init();
     window.addEventListener("resize", this.onWindowResize.bind(this));
-    window.addEventListener('keydown', (e) => this.handleKeyPress(e));
-    window.addEventListener("click", () => this.startAudioContext(), { once: true });
+    window.addEventListener("keydown", e => this.handleKeyPress(e));
+    window.addEventListener("click", () => this.startAudioContext(), {
+      once: true,
+    });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.startActivePhase()
+    this.startActivePhase();
     this.animate();
     this.startGameLoop();
   }
@@ -96,9 +96,14 @@ export default class Game {
   transitionToNextPhase() {
     this.currentPhaseIndex = (this.currentPhaseIndex + 1) % this.phases.length;
     this.currentPhase = this.phases[this.currentPhaseIndex];
+    if (this.currentPhase === 'freezing')
+      this.phaseDurations.freezing += 10
+    
     this.remainingTime = this.phaseDurations[this.currentPhase];
+    console.log(this.remainingTime)
 
-    if (this.currentPhaseIndex === 0) { // New block begins
+    if (this.currentPhaseIndex === 0) {
+      // New block begins
       this.currentBlock++;
       if (this.currentBlock > 4) {
         this.onGameCompleted();
@@ -130,21 +135,21 @@ export default class Game {
 
   startActivePhase() {
     this.currentPhase = "active";
-    this.environment.loadObstacles()
-    console.log('active')
+    this.environment.loadObstacles();
+    console.log("active");
     // Any setup needed for active phase
   }
 
   startFreezingPhase() {
     this.currentPhase = "freezing";
-    console.log('freezing')
+    this.levitationStarted = false; // Reset the levitation flag
+    console.log("freezing");
     this.player.beforeFreeze();
-    // Any setup needed for freezing phase
   }
 
   startPreparationPhase() {
-    console.log('preparing')
-    this.wallSystem.spawnWall()
+    console.log("preparing");
+    this.wallSystem.spawnWall();
     this.currentPhase = "preparation";
     // Any setup needed for preparation phase
   }
@@ -153,7 +158,7 @@ export default class Game {
     this.currentPhase = "break";
     this.breakPhaseStartTime = Date.now();
     this.breakResetComplete = false;
-    console.log('break phase started');
+    console.log("break phase started");
   }
 
   onGameCompleted() {
@@ -168,42 +173,29 @@ export default class Game {
   }
 
   prepare() {
-    this.delta = this.clock.getDelta()
-    this.environment.active(this.speed, this.delta)
-    this.player.active(this.delta)
-    this.wallSystem.update(this.delta, this.speed)
-  }
-
-  startTpose() {
-    this.isTposing = true;
-    this.tposeStartTime = Date.now();
-    this.player.startTpose();
-  }
-
-  updateTpose() {
-    if (!this.isTposing) return;
-
-    const elapsed = Date.now() - this.tposeStartTime;
-    if (elapsed >= this.tposeDuration) {
-      this.player.startLevitation();
-      this.isTposing = false;
-    }
+    this.delta = this.clock.getDelta();
+    this.environment.active(this.speed, this.delta);
+    this.player.active(this.delta);
+    this.wallSystem.update(this.delta, this.speed);
   }
 
   freeze() {
     this.delta = this.clock.getDelta();
     this.environment.freeze();
     this.player.freeze(this.delta);
-    if (this.isTposing) {
-      this.updateTpose();
+
+    // Start levitation when 3 seconds remain in freezing phase
+    if (!this.levitationStarted && this.remainingTime <= 3 ) {
+      this.levitationStarted = true;
+      this.player.levitate();
     }
   }
 
   break() {
     const elapsedTime = Date.now() - this.breakPhaseStartTime;
-    
+
     // Wait for 3 seconds before starting reset
-    if (elapsedTime >= 3000 && !this.breakResetComplete) {
+    if (elapsedTime >= 2000 && !this.breakResetComplete) {
       this.resetAfterBreak();
       this.breakResetComplete = true;
     }
@@ -216,7 +208,7 @@ export default class Game {
       this.player.reset({
         x: 0,
         y: 0,
-        z: 68 // Initial z position
+        z: 68, // Initial z position
       });
     }
 
@@ -233,37 +225,42 @@ export default class Game {
 
     // 4. Reset game state and speeds
     this.speed = 20; // Reset to initial speed
-
-    console.log('game reset complete');
   }
 
   animate() {
     if (this.currentPhase === "active") {
       this.active();
     } else if (this.currentPhase === "preparation") {
-      this.prepare()
+      this.prepare();
     } else if (this.currentPhase === "freezing") {
       this.freeze();
     } else {
-      this.break()
+      this.break();
     }
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(() => this.animate());
   }
 
+  handleKeyPress(event) {
+    if (event.key === "ArrowUp" && this.currentPhase === "active") {
+      this.player.jump();
+    }
+    
+    // For the freezing phase, we can now support multiple poses
+    if (this.currentPhase === "freezing") {
+      switch(event.key) {
+        case 't':
+          this.player.startPose('tpose');
+          break;
+        // Add more pose triggers here
+      }
+    }
+  }
+  
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  handleKeyPress(event) {
-    if (event.key === 'ArrowUp' && this.currentPhase === 'active') {
-      this.player.jump()
-    }
-    if (event.key === 't' && this.currentPhase === 'freezing' && !this.isTposing) {
-      this.startTpose();
-    }
   }
 
   async startAudioContext() {

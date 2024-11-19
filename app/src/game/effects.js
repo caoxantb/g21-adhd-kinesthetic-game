@@ -5,7 +5,7 @@ export default class EffectsSystem {
     this.scene = scene;
     this.effectsGroup = new THREE.Group();
     this.scene.add(this.effectsGroup);
-    
+
     this.time = 0;
     this.createGlowRings();
     this.createParticleSystems();
@@ -18,7 +18,7 @@ export default class EffectsSystem {
     const ringMaterial = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
       transparent: true,
-      opacity: 0.5
+      opacity: 0.5,
     });
     this.mainRing = new THREE.Mesh(ringGeometry, ringMaterial);
     this.mainRing.rotation.x = Math.PI / 2;
@@ -30,7 +30,7 @@ export default class EffectsSystem {
     const outerRingMaterial = new THREE.MeshBasicMaterial({
       color: 0xff00ff,
       transparent: true,
-      opacity: 0.3
+      opacity: 0.3,
     });
     this.outerRing = new THREE.Mesh(outerRingGeometry, outerRingMaterial);
     this.outerRing.rotation.x = Math.PI / 2;
@@ -42,7 +42,7 @@ export default class EffectsSystem {
     const innerRingMaterial = new THREE.MeshBasicMaterial({
       color: 0xffd700,
       transparent: true,
-      opacity: 0.4
+      opacity: 0.4,
     });
     this.innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
     this.innerRing.rotation.x = Math.PI / 2;
@@ -56,12 +56,12 @@ export default class EffectsSystem {
     const sparkleCount = 150;
     const sparklePositions = new Float32Array(sparkleCount * 3);
     const sparkleColors = new Float32Array(sparkleCount * 3);
-    
+
     const colors = [
       new THREE.Color(0x00ffff), // cyan
       new THREE.Color(0xff00ff), // purple
       new THREE.Color(0xffd700), // gold
-      new THREE.Color(0xff69b4)  // pink
+      new THREE.Color(0xff69b4), // pink
     ];
 
     for (let i = 0; i < sparkleCount; i++) {
@@ -77,8 +77,14 @@ export default class EffectsSystem {
       sparkleColors[i * 3 + 2] = color.b;
     }
 
-    sparkleGeometry.setAttribute('position', new THREE.BufferAttribute(sparklePositions, 3));
-    sparkleGeometry.setAttribute('color', new THREE.BufferAttribute(sparkleColors, 3));
+    sparkleGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(sparklePositions, 3),
+    );
+    sparkleGeometry.setAttribute(
+      "color",
+      new THREE.BufferAttribute(sparkleColors, 3),
+    );
 
     const sparkleMaterial = new THREE.PointsMaterial({
       size: 0.05,
@@ -86,7 +92,7 @@ export default class EffectsSystem {
       opacity: 0.8,
       blending: THREE.AdditiveBlending,
       vertexColors: true,
-      depthWrite: false
+      depthWrite: false,
     });
 
     this.sparkleSystem = new THREE.Points(sparkleGeometry, sparkleMaterial);
@@ -99,7 +105,7 @@ export default class EffectsSystem {
     const fieldMaterial = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        baseColor: { value: new THREE.Color(0x00ffff) }
+        baseColor: { value: new THREE.Color(0x00ffff) },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -125,7 +131,7 @@ export default class EffectsSystem {
         }
       `,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
 
     this.energyField = new THREE.Mesh(fieldGeometry, fieldMaterial);
@@ -153,14 +159,13 @@ export default class EffectsSystem {
   updateEffects(phase, playerPosition) {
     this.time += 0.016; // Assuming 60fps
     this.effectsGroup.position.copy(playerPosition);
-    
+
     if (this.energyField.material.uniforms) {
       this.energyField.material.uniforms.time.value = this.time;
     }
-    let mainPulse, outerPulse, innerPulse, sparklePositions, positions
-    switch(phase) {
-        
-      case 'tpose':
+    let mainPulse, outerPulse, innerPulse, sparklePositions, positions;
+    switch (phase) {
+      case "tpose":
         // Rotate rings in different directions
         this.mainRing.rotation.y = Math.sin(this.time) * 0.5;
         this.outerRing.rotation.y = -this.time * 0.5;
@@ -170,7 +175,7 @@ export default class EffectsSystem {
         mainPulse = 1 + Math.sin(this.time * 2) * 0.1;
         outerPulse = 1 + Math.sin(this.time * 1.5 + 1) * 0.15;
         innerPulse = 1 + Math.sin(this.time * 2.5 + 2) * 0.05;
-        
+
         this.mainRing.scale.setScalar(mainPulse);
         this.outerRing.scale.setScalar(outerPulse);
         this.innerRing.scale.setScalar(innerPulse);
@@ -184,14 +189,15 @@ export default class EffectsSystem {
         this.sparkleSystem.geometry.attributes.position.needsUpdate = true;
         break;
 
-      case 'levitating':
+      case "levitating":
         // More dramatic effects during levitation
         this.mainRing.rotation.y += 0.04;
         this.outerRing.rotation.y -= 0.03;
         this.innerRing.rotation.y += 0.05;
 
         // Update sparkle system for upward movement
-        sparklePositions = this.sparkleSystem.geometry.attributes.position.array;
+        sparklePositions =
+          this.sparkleSystem.geometry.attributes.position.array;
         for (let i = 0; i < sparklePositions.length; i += 3) {
           sparklePositions[i + 1] += 0.01;
           if (sparklePositions[i + 1] > 2) {

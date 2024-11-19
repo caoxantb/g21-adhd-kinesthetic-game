@@ -10,10 +10,6 @@ const store = useGameStore();
 const canvas = ref(null);
 let game = null;
 
-function onJump() {
-  game.player?.jump();
-}
-
 onBeforeMount(() => {});
 
 onMounted(async () => {
@@ -35,7 +31,6 @@ onUnmounted(() => {
       :progress="store.accuracy"
       :success="store.success"
       :fail="store.fail"
-      @jump="onJump"
     ></RightBar>
   </div>
 </template>
