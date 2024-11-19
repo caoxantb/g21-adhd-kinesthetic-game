@@ -127,7 +127,7 @@ export default class Player {
     return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
   }
 
-  async jump() {
+  jump() {
     if (!this.isJumping) {
       this.playJumpSound();
       this.isJumping = true;
@@ -137,6 +137,7 @@ export default class Player {
       this.currentAnimation.reset();
       this.currentAnimation.setLoop(1, 1);
       this.currentAnimation.clampWhenFinished = true;
+      this.currentAnimation.setEffectiveTimeScale(0.8).setEffectiveWeight(1.0)
       this.currentAnimation.play();
 
       this.animationMixer.addEventListener("finished", () => {
@@ -157,16 +158,12 @@ export default class Player {
     if (this.animationMixer) {
       this.animationMixer.update(delta);
     }
-    if (this.currentAnimation && this.currentAnimation !== this.runningAnimation) {
+    if (this.currentAnimation && this.currentAnimation === this.standingAnimation) {
       this.currentAnimation
-          .crossFadeTo(this.runningAnimation, 0.1, false)
+          .crossFadeTo(this.runningAnimation, 0.3, false)
           .play();
         this.currentAnimation = this.runningAnimation;
     }
-  }
-
-  prepare() {
-    this.currentAnimation.setEffectiveTimeScale(0.6)
   }
 
   beforeFreeze() {
@@ -185,6 +182,19 @@ export default class Player {
       this.effects.updateEffects('levitating', this.player.position);
     } else if (this.currentAnimation === this.tposeAnimation) {
       this.effects.updateEffects('tpose', this.player.position);
+    }
+  }
+
+  reset(position) {
+    // Reset position
+    this.player.position.set(position.x, position.y, position.z);
+    
+    // Reset state
+    this.isJumping = false;
+    
+    // Cleanup effects
+    if (this.effects) {
+      this.effects.cleanup();
     }
   }
 

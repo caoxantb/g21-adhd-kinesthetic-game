@@ -4,8 +4,6 @@ import { useGameStore } from "@/stores/game";
 import ObstacleSystem from './obstacles';
 
 import ground from "@/assets/game/models/ground.glb";
-import obstacle from "@/assets/game/models/obstacle.glb";
-import coin from "@/assets/game/models/coin.glb";
 
 import coinSound from "@/assets/game/sounds/coin.wav";
 
@@ -35,9 +33,6 @@ export default class Environment {
     this.groundClone.position.z = -(this.ground.position.z + this.groundSize);
     this.scene.add(this.groundClone);
 
-    this.obstacles = new ObstacleSystem(this.scene);
-    await this.obstacles.init();
-
     const listener = new THREE.AudioListener();
     this.scene.getObjectByName("camera").add(listener);
     this.sound = new THREE.Audio(listener);
@@ -46,6 +41,11 @@ export default class Environment {
     this.sound.setBuffer(buffer);
     this.sound.setLoop(false);
     this.sound.setVolume(0.5);
+  }
+
+  loadObstacles() {
+    this.obstacles = new ObstacleSystem(this.scene);
+    this.obstacles.init();
   }
 
   active(speed, delta) {
@@ -93,7 +93,18 @@ export default class Environment {
     this.sound.play();
   }
 
+  reset() {
+    // Reset ground positions
+    this.ground.position.set(0, 0, 0);
+    this.groundClone.position.z = -(this.ground.position.z + this.groundSize);
+    
+    // Reset speed
+    this.currentSpeed = 20;
+  }
+
   cleanup() {
-    this.obstacles.cleanup();
+    if (this.obstacles) {
+      this.obstacles.cleanup();
+    }
   }
 }

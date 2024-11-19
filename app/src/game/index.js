@@ -18,7 +18,7 @@ export default class Game {
     this.currentPhaseIndex = 0; // To track the current phase in each block
     this.phases = ["active", "preparation", "freezing", "break"];
     this.phaseDurations = {
-      active: 5,      // seconds
+      active: 30,      // seconds
       preparation: 10,  // seconds
       freezing: 15,     // seconds (can be adjusted dynamically)
       break: 20         // seconds
@@ -26,6 +26,9 @@ export default class Game {
     this.isTposing = false;
     this.tposeStartTime = 0;
     this.tposeDuration = 10000;
+
+    this.breakPhaseStartTime = 0;
+    this.breakResetComplete = false;
     this.currentPhase = this.phases[this.currentPhaseIndex];
     this.remainingTime = this.phaseDurations[this.currentPhase]; // Duration for the current phase
     this.init();
@@ -75,7 +78,7 @@ export default class Game {
     window.addEventListener('keydown', (e) => this.handleKeyPress(e));
     window.addEventListener("click", () => this.startAudioContext(), { once: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-
+    this.startActivePhase()
     this.animate();
     this.startGameLoop();
   }
@@ -127,6 +130,7 @@ export default class Game {
 
   startActivePhase() {
     this.currentPhase = "active";
+    this.environment.loadObstacles()
     console.log('active')
     // Any setup needed for active phase
   }
@@ -147,10 +151,9 @@ export default class Game {
 
   startBreakPhase() {
     this.currentPhase = "break";
-    console.log('break')
-    this.wallSystem.cleanup()
-    this.environment.cleanup()
-    // Any setup needed for break phase
+    this.breakPhaseStartTime = Date.now();
+    this.breakResetComplete = false;
+    console.log('break phase started');
   }
 
   onGameCompleted() {
@@ -196,6 +199,44 @@ export default class Game {
     }
   }
 
+  break() {
+    const elapsedTime = Date.now() - this.breakPhaseStartTime;
+    
+    // Wait for 3 seconds before starting reset
+    if (elapsedTime >= 3000 && !this.breakResetComplete) {
+      this.resetAfterBreak();
+      this.breakResetComplete = true;
+    }
+  }
+
+  resetAfterBreak() {
+    // 1. Reset player
+    if (this.player) {
+      // Reset position
+      this.player.reset({
+        x: 0,
+        y: 0,
+        z: 68 // Initial z position
+      });
+    }
+
+    // 2. Reset environment
+    if (this.environment) {
+      this.environment.cleanup();
+      this.environment.reset();
+    }
+
+    // 3. Reset wall system
+    if (this.wallSystem) {
+      this.wallSystem.cleanup();
+    }
+
+    // 4. Reset game state and speeds
+    this.speed = 20; // Reset to initial speed
+
+    console.log('game reset complete');
+  }
+
   animate() {
     if (this.currentPhase === "active") {
       this.active();
@@ -204,7 +245,7 @@ export default class Game {
     } else if (this.currentPhase === "freezing") {
       this.freeze();
     } else {
-      // this.break()
+      this.break()
     }
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(() => this.animate());
@@ -217,6 +258,9 @@ export default class Game {
   }
 
   handleKeyPress(event) {
+    if (event.key === 'ArrowUp' && this.currentPhase === 'active') {
+      this.player.jump()
+    }
     if (event.key === 't' && this.currentPhase === 'freezing' && !this.isTposing) {
       this.startTpose();
     }

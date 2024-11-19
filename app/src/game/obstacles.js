@@ -3,7 +3,6 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import car1 from '@/assets/game/models/car1.glb'
 import car2 from '@/assets/game/models/car2.glb'
-import car3 from '@/assets/game/models/car3.glb'
 
 export default class ObstacleSystem {
     constructor(scene) {
@@ -22,13 +21,20 @@ export default class ObstacleSystem {
 
         this.numberOfCarsSpawned = 0
         
-        this.activePhaseDuration = 20;
-        this.carTravelTime = Math.abs(this.despawnDistance - this.spawnDistance) / (20 * 1.8);
-        this.targetNumberOfCars = Math.floor((this.activePhaseDuration) / (2 * this.carTravelTime));
-        console.log(this.targetNumberOfCars)
-        this.minSpawnInterval = this.carTravelTime * 1000 + 2000;
+        this.activePhaseDuration = 30;
         this.initialized = false;
         this.init();
+    }
+
+    initializeObstacleTiming() {
+        this.carTravelTime = Math.abs(this.despawnDistance - this.spawnDistance) / (20 * 3);
+        this.targetNumberOfCars = Math.floor((this.activePhaseDuration) /(1.5 * this.carTravelTime));
+        console.log(this.targetNumberOfCars)
+        const baseInterval = this.activePhaseDuration * 1000 / this.targetNumberOfCars; // in milliseconds
+
+        // Introduce a small random jitter, if needed, while keeping cars evenly spaced
+        // const jitterFactor = Math.random() * 0.1 - 0.05; // Jitter in the range [-5%, +5%]
+        this.minSpawnInterval = baseInterval 
     }
 
     async init() {
@@ -52,6 +58,7 @@ export default class ObstacleSystem {
                     console.error(`Failed to load model: ${modelPath}`, error);
                 }
             }
+            this.initializeObstacleTiming()
 
             this.initialized = true;
             this.nextSpawnTime = Date.now(); // Initial spawn delay
@@ -81,12 +88,12 @@ export default class ObstacleSystem {
         const obstacleModel = this.modelPool.get(modelPath);
 
         const obstacle = obstacleModel.clone();
-        obstacle.position.set(0, 0, this.spawnDistance);
+        obstacle.position.set(0, -1, this.spawnDistance);
 
         this.scene.add(obstacle);
         this.activeObstacles.push({
             model: obstacle,
-            speed: 1.8
+            speed: 3
         });
         this.numberOfCarsSpawned ++
 
