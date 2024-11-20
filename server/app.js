@@ -27,7 +27,6 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production",
 };
 const cookieSecret = process.env.COOKIE_SECRET;
-console.log(cookieSecret);
 
 app.set("cookieOptions", cookieOptions);
 app.set("cookieSecret", cookieSecret);
