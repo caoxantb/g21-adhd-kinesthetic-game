@@ -23,7 +23,7 @@ export default class ObstacleSystem {
 
     this.numberOfCarsSpawned = 0;
 
-    // For collision detection mostly.
+    // For collision detection.
     this.obstacleHeightModifier = 4;
 
     this.activePhaseDuration = 170;

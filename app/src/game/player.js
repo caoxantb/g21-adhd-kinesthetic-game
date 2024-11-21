@@ -15,9 +15,9 @@ export default class Player {
     this.store = new useGameStore();
     this.scene = scene;
 
-    this.baseVelocity = -0.002;
-    this.currentVelocity = -0.002;
-    this.gravity = -0.0012;
+    this.baseVelocity = 0;
+    this.currentVelocity = 0;
+    this.testGravity = -0.0113;
 
     this.currentAnimation = null;
     this.runningAnimation = null;
@@ -52,19 +52,6 @@ export default class Player {
     this.player.userData.obb.center.z = this.player.position.z;
     this.player.userData.originalCenter = this.player.userData.obb.center.clone();
 
-    console.log(this.player.userData.obb);
-
-    const bboxMaterial2 = new THREE.MeshBasicMaterial({ color: 0x00FF00, wireframe: true, depthTest: true  });
-    const bbox2 = new THREE.LineSegments(new THREE.BoxGeometry(
-      this.player.userData.obb.halfSize.x*2,
-      this.player.userData.obb.halfSize.y*2,
-      this.player.userData.obb.halfSize.z*2
-    ),
-      bboxMaterial2
-    );
-    bbox2.position.copy(this.player.userData.obb.center);
-		this.scene.add(bbox2);
-
     this.scene.add(this.player);
 
     const listener = new THREE.AudioListener();
@@ -80,14 +67,14 @@ export default class Player {
 
   jump() {
     this.animationSystem.playAnimation('jump');
-
-    this.player.userData.obb.center.y += 5;
-    
+    this.currentVelocity = 0.35;
     this.isJumping = true;
   }
 
   stumble() {
-    this.animationSystem.playAnimation('stumble');
+    if (this.animationSystem.currentAnimationName !== "stumble") {
+      this.animationSystem.playAnimation('stumble');
+    }
   }
 
   levitate() {
@@ -103,7 +90,24 @@ export default class Player {
     if (this.player) {
       if (this.isJumping) {
         this.player.userData.obb.center.y += this.currentVelocity;
-        this.currentVelocity += this.gravity;
+        this.currentVelocity += this.testGravity;
+
+        // For testing purposes, delete when satisfied with the jump.
+        // const bboxMaterial2 = new THREE.MeshBasicMaterial({ color: 0x00FF00, wireframe: true, depthTest: true  });
+        // const bbox2 = new THREE.LineSegments(new THREE.BoxGeometry(
+        //   this.player.userData.obb.halfSize.x*2,
+        //   this.player.userData.obb.halfSize.y*2,
+        //   this.player.userData.obb.halfSize.z*2
+        // ),
+        //   bboxMaterial2
+        // );
+        // bbox2.position.copy(this.player.userData.obb.center);
+		    // this.scene.add(bbox2);
+
+        // setTimeout(() => {
+        //   this.scene.remove(bbox2);
+        // }, 100);
+
       }
     }
   }
