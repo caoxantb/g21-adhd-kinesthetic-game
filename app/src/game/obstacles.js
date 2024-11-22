@@ -22,7 +22,7 @@ export default class ObstacleSystem {
 
     this.numberOfCarsSpawned = 0;
 
-    this.activePhaseDuration = 170;
+    this.activePhaseDuration = 10;
     this.initialized = false;
     this.init();
   }
