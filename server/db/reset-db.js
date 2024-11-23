@@ -16,6 +16,7 @@ const readJsonFile = async path => {
   try {
     const users = await readJsonFile("./json/users.json");
     const postures = await readJsonFile("./json/postures.json");
+    const gameplays = await readJsonFile("./json/gameplays.json");
 
     const authenticatedUsers = await Promise.all(
       users.map(async user => {
@@ -31,6 +32,8 @@ const readJsonFile = async path => {
 
     await User.create(authenticatedUsers);
     await Posture.create(postures);
+    await Gameplay.create(gameplays);
+
   } catch (err) {
     console.error(err);
   } finally {

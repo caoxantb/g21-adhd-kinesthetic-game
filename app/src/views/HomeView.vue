@@ -13,28 +13,6 @@ const tab = ref(0);
 const leaderboards = ref([]);
 const gameplays = ref([]);
 
-const mockGameplays = [
-	{
-		"player": "i_am_the_arm",
-		"blocks": [
-			{
-				"blockId": 1,
-				"jumpsSucceeded": 5,
-				"jumpsFailed": 2,
-				"averagePoseAccuracy": 85
-			},
-			{
-				"blockId": 2,
-				"jumpsSucceeded": 3,
-				"jumpsFailed": 1,
-				"averagePoseAccuracy": 90
-			}
-		],
-		"score": 150,
-		"createdAt": "2023-10-01T12:00:00Z",
-		"updatedAt": "2023-10-01T12:00:00Z"
-	}
-]
 
 async function getLeaderboards() {
   try {
@@ -47,9 +25,11 @@ async function getLeaderboards() {
 async function getGameplays() {
   try {
     const res = await api.get(`gameplays/player/${auth.user.username}`);
-    gameplays.value = mockGameplays;
+    gameplays.value = res;
     console.log("Gameplays: ", gameplays.value);
-  } catch (err) {}
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 function startNewGame() {
@@ -114,9 +94,7 @@ onBeforeMount(async () => {
           >
             <div class="tab-item-rank">{{ index + 1 }}</div>
             <div class="tab-item-name">{{ leaderboard.name }}</div>
-            <div class="text-lg">
-              <span class="text-sm">Score</span> {{ leaderboard.totalScore }}
-            </div>
+            <div class="text-sm">Score {{ leaderboard.totalScore }}</div>
           </div>
         </div>
 
@@ -127,10 +105,8 @@ onBeforeMount(async () => {
             :key="index"
           > 
             <div class="tab-item-rank">{{ index + 1 }}</div>
-            <div>{{ $filters.formatDate(gameplay.updatedAt) }}</div>
-            <div class="text-lg">
-              <span class="text-sm">Score</span> {{ gameplay.score }}
-            </div>
+            <div class="text-sm">Score {{ gameplay.score }}</div>
+            <div class="text-sm">{{ $filters.formatDate(gameplay.updatedAt) }}</div>
           </div>
         </div>
       </div>
@@ -304,7 +280,4 @@ onBeforeMount(async () => {
   font-size: 16px;
 }
 
-.text-lg {
-  font-size: 23px;
-}
 </style>
