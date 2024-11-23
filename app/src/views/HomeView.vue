@@ -11,8 +11,30 @@ const auth = useAuthStore();
 
 const tab = ref(0);
 const leaderboards = ref([]);
-
 const gameplays = ref([]);
+
+const mockGameplays = [
+	{
+		"player": "i_am_the_arm",
+		"blocks": [
+			{
+				"blockId": 1,
+				"jumpsSucceeded": 5,
+				"jumpsFailed": 2,
+				"averagePoseAccuracy": 85
+			},
+			{
+				"blockId": 2,
+				"jumpsSucceeded": 3,
+				"jumpsFailed": 1,
+				"averagePoseAccuracy": 90
+			}
+		],
+		"score": 150,
+		"createdAt": "2023-10-01T12:00:00Z",
+		"updatedAt": "2023-10-01T12:00:00Z"
+	}
+]
 
 async function getLeaderboards() {
   try {
@@ -25,7 +47,7 @@ async function getLeaderboards() {
 async function getGameplays() {
   try {
     const res = await api.get(`gameplays/player/${auth.user.username}`);
-    gameplays.value = res;
+    gameplays.value = mockGameplays;
     console.log("Gameplays: ", gameplays.value);
   } catch (err) {}
 }
@@ -66,10 +88,6 @@ onBeforeMount(async () => {
         </div>
 
         <div class="data-box">
-          <div class="level-box">
-            <div>Level</div>
-            <div class="level">{{ auth.user?.currentLevel }}</div>
-          </div>
 
           <div class="score-box">
             <div>Score</div>
@@ -96,7 +114,6 @@ onBeforeMount(async () => {
           >
             <div class="tab-item-rank">{{ index + 1 }}</div>
             <div class="tab-item-name">{{ leaderboard.name }}</div>
-            <div class="text-sm">Level {{ leaderboard.currentLevel }}</div>
             <div class="text-lg">
               <span class="text-sm">Score</span> {{ leaderboard.totalScore }}
             </div>
@@ -108,13 +125,11 @@ onBeforeMount(async () => {
             class="tab-item"
             v-for="(gameplay, index) in gameplays"
             :key="index"
-          >
+          > 
+            <div class="tab-item-rank">{{ index + 1 }}</div>
             <div>{{ $filters.formatDate(gameplay.updatedAt) }}</div>
-            <div>Level {{ gameplay.level }}</div>
-            <div>Score {{ gameplay.score }}</div>
-            <div>
-              <el-icon class="icon-timer" :size="25"><icon-ep-timer /></el-icon>
-              {{ gameplay.completedTime }}
+            <div class="text-lg">
+              <span class="text-sm">Score</span> {{ gameplay.score }}
             </div>
           </div>
         </div>
