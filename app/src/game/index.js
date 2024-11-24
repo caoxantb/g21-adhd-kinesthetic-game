@@ -214,13 +214,18 @@ export default class Game {
  }
 
  break() {
-   const elapsedTime = Date.now() - this.breakPhaseStartTime;
-   if (elapsedTime >= 2000 && !this.breakResetComplete) {
-     this.resetAfterBreak();
-     this.breakResetComplete = true;
-     this.store.toggleStats(false); // Close stats at end of break
-   }
- }
+  const elapsedTime = Date.now() - this.breakPhaseStartTime;
+  const breakTimeLeft = Math.max(0, Math.ceil((20000 - elapsedTime) / 1000));
+  
+  // Update store with break time
+  this.store.setBreakTime(breakTimeLeft);
+  
+  if (elapsedTime >= 19000 && !this.breakResetComplete) {
+    this.resetAfterBreak();
+    this.breakResetComplete = true;
+    this.store.toggleStats(false);
+  }
+}
 
  resetAfterBreak() {
    if (this.player) {

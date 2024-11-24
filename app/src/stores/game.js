@@ -9,6 +9,7 @@ export const useGameStore = defineStore("game", {
     success: 0,
     fail: 0,
     showStats: false,
+    breakTimeLeft: 20,
   }),
   getters: {
     progress: state => (state.timePassed / state.duration) * 100,
@@ -33,6 +34,9 @@ export const useGameStore = defineStore("game", {
     },
     toggleStats(show = true) {
       this.showStats = show;
+    },
+    setBreakTime(time) {
+      this.breakTimeLeft = time;
     }
   },
 });
