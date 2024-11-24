@@ -241,20 +241,8 @@ export default class Game {
     requestAnimationFrame(() => this.animate());
   }
 
-  handleKeyPress(event) {
-    if (event.key === "ArrowUp" && this.currentPhase === "active") {
-      this.player.jump();
-    }
-    
-    // For the freezing phase, we can now support multiple poses
-    if (this.currentPhase === "freezing") {
-      switch(event.key) {
-        case 't':
-          this.player.startPose('tpose');
-          break;
-        // Add more pose triggers here
-      }
-    }
+  jump() {
+    this.player.jump();
   }
   
   onWindowResize() {
