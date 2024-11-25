@@ -6,12 +6,7 @@ import "express-async-errors";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import {
-  levelRouter,
-  frameRouter,
-  userRouter,
-  gameplayRouter,
-} from "./routers/index.js";
+import { postureRouter, userRouter, gameplayRouter } from "./routers/index.js";
 
 import { authenticateUser } from "./middlewares/auth.js";
 import { errorHandler } from "./middlewares/error.js";
@@ -38,8 +33,7 @@ app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 
 // routes
-app.use("/api/v1/levels", levelRouter);
-app.use("/api/v1/frames", frameRouter);
+app.use("/api/v1/postures", postureRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/gameplays", gameplayRouter);
 

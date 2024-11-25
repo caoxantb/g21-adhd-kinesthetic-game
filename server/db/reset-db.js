@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 dotenv.config();
 
-import { connectDatabase, disconnectDatabase } from "./connection";
-import { User, Level, Gameplay, Frame } from "../models";
+import { connectDatabase, disconnectDatabase } from "./connection.js";
+import { User, Gameplay, Posture } from "../models/index.js";
 
 const readJsonFile = async path => {
   return JSON.parse(await readFile(new URL(path, import.meta.url)));
@@ -15,7 +15,8 @@ const readJsonFile = async path => {
 
   try {
     const users = await readJsonFile("./json/users.json");
-    const levels = await readJsonFile("./json/levels.json");
+    const postures = await readJsonFile("./json/postures.json");
+    const gameplays = await readJsonFile("./json/gameplays.json");
 
     const authenticatedUsers = await Promise.all(
       users.map(async user => {
@@ -26,12 +27,13 @@ const readJsonFile = async path => {
     );
 
     await User.deleteMany();
-    await Level.deleteMany();
     await Gameplay.deleteMany();
-    await Frame.deleteMany();
+    await Posture.deleteMany();
 
     await User.create(authenticatedUsers);
-    await Level.create(levels);
+    await Posture.create(postures);
+    await Gameplay.create(gameplays);
+
   } catch (err) {
     console.error(err);
   } finally {
