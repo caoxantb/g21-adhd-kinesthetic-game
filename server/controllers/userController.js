@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import { User } from "../models/index.js";
-import { BadRequest, Unauthorized, NotFound } from "../utils/httpError.js";
+import { BadRequest, NotFound } from "../utils/httpError.js";
 
 export const userLogin = async (req, res) => {
   const { username, password } = req.body;
@@ -101,7 +101,7 @@ export const getUserLeaderboards = async (req, res) => {
   const { limit } = req.query;
 
   const users = await User.find()
-    .sort({ level: -1, score: -1, username: 1 })
+    .sort({ score: -1, username: 1 })
     .limit(parseInt(limit) || 10);
 
   res.json(users);

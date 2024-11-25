@@ -48,7 +48,7 @@ export default class Environment {
     this.obstacles.init();
   }
 
-  active(speed, delta) {
+  active(speed, delta, player) {
     // Update ground positions
     this.ground.position.z += speed * delta;
     this.groundClone.position.z += speed * delta;
@@ -64,6 +64,7 @@ export default class Environment {
     // Update obstacles if environment is fully loaded
     if (this.obstacles) {
       this.obstacles.update(delta, speed);
+      this.detectObstacleCollision(player);
     }
   }
 
@@ -82,7 +83,19 @@ export default class Environment {
 
   freeze() {}
 
-  detectObstacleCollision() {}
+  detectObstacleCollision(player) {
+    if (player.player) {
+      for (let i = this.obstacles.activeObstacles.length - 1; i >= 0; i--) {
+        const obstacle = this.obstacles.activeObstacles[i];
+
+        if (player.player.userData.obb.intersectsOBB(obstacle.model.userData.obb)) {
+          console.log("colliding here");
+          player.stumble();
+        }
+      }
+    }
+    
+  }
 
   detectCoinCollision() {
     // this.store.addCoin();

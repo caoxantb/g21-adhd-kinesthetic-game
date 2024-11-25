@@ -168,13 +168,13 @@ export default class Game {
 
   active() {
     this.delta = this.clock.getDelta();
-    this.environment.active(this.speed, this.delta);
+    this.environment.active(this.speed, this.delta, this.player);
     this.player.active(this.delta);
   }
 
   prepare() {
     this.delta = this.clock.getDelta();
-    this.environment.active(this.speed, this.delta);
+    this.environment.active(this.speed, this.delta, this.player);
     this.player.active(this.delta);
     this.wallSystem.update(this.delta, this.speed);
   }
@@ -243,6 +243,22 @@ export default class Game {
 
   jump() {
     this.player.jump();
+  }
+  
+  handleKeyPress(event) {
+    if (event.key === "ArrowUp" && this.currentPhase === "active" && this.player.animationSystem.currentAnimationName === "run") {
+      this.player.jump();
+    }
+    
+    // For the freezing phase, we can now support multiple poses
+    if (this.currentPhase === "freezing") {
+      switch(event.key) {
+        case 't':
+          this.player.startPose('tpose');
+          break;
+        // Add more pose triggers here
+      }
+    }
   }
   
   onWindowResize() {

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from 'three/addons/math/OBB.js';
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import car1 from "@/assets/game/models/car1.glb";
@@ -21,6 +22,9 @@ export default class ObstacleSystem {
     this.nextSpawnTime = 0;
 
     this.numberOfCarsSpawned = 0;
+
+    // For collision detection.
+    this.obstacleHeightModifier = 4;
 
     this.activePhaseDuration = 170;
     this.initialized = false;
@@ -57,6 +61,7 @@ export default class ObstacleSystem {
             }
           });
           this.normalizeModelSize(model);
+
           this.modelPool.set(modelPath, model);
           console.log(`Loaded model: ${modelPath}`);
         } catch (error) {
@@ -64,7 +69,7 @@ export default class ObstacleSystem {
         }
       }
       this.initializeObstacleTiming();
-
+      
       this.initialized = true;
       this.nextSpawnTime = Date.now(); // Initial spawn delay
     } catch (error) {
@@ -94,9 +99,14 @@ export default class ObstacleSystem {
         Math.floor(Math.random() * this.obstacleModels.length)
       ];
     const obstacleModel = this.modelPool.get(modelPath);
-
+    
     const obstacle = obstacleModel.clone();
     obstacle.position.set(0, -1, this.spawnDistance);
+    
+    // Set the collision box for the obstacle
+    const box3 = new THREE.Box3().setFromObject(obstacle);
+    obstacle.userData.obb = new OBB().fromBox3(box3);
+    obstacle.userData.obb.halfSize.y = this.obstacleHeightModifier - obstacle.userData.obb.center.y;
 
     this.scene.add(obstacle);
     this.activeObstacles.push({
@@ -117,6 +127,7 @@ export default class ObstacleSystem {
     for (let i = this.activeObstacles.length - 1; i >= 0; i--) {
       const obstacle = this.activeObstacles[i];
       obstacle.model.position.z += gameSpeed * delta * obstacle.speed;
+      obstacle.model.userData.obb.center.z = obstacle.model.position.z;
 
       // Remove if past despawn point
       if (obstacle.model.position.z > this.despawnDistance) {

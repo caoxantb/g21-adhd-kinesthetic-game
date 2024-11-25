@@ -4,6 +4,7 @@ import running from "@/assets/game/animations/Running.fbx";
 import jumping from "@/assets/game/animations/Jump.fbx";
 import standing from "@/assets/game/animations/Idle.fbx";
 import tpose from "@/assets/game/animations/T-Pose.fbx";
+import stumble from "@/assets/game/animations/Jogging Stumble.fbx";
 
 export default class AnimationSystem {
   constructor(playerInstance) {
@@ -60,6 +61,15 @@ export default class AnimationSystem {
         onStart: () => {
           this.player.effects.startTposeEffects();
         },
+      },
+      {
+        name: "stumble",
+        path: stumble,
+        loop: 1,
+        clampWhenFinished: true,
+        timeScale: 0.8,
+        weight: 1.0,
+        onComplete: () => this.playAnimation("run"),
       },
       // Add more animations here as needed
     ];
@@ -152,6 +162,7 @@ export default class AnimationSystem {
         if (this.currentAnimationName === name) {
           newAnimation.onComplete();
           this.mixer.removeEventListener("finished", onFinish);
+          this.player.resetAfterJump();
         }
       };
       this.mixer.addEventListener("finished", onFinish);

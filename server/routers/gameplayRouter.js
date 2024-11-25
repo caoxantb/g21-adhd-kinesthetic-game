@@ -3,21 +3,14 @@ import {
   saveGameplay,
   getGameplayById,
   getGameplaysByPlayer,
-  getGameplaysByLevel,
+  getGameplayLeaderboars,
 } from "../controllers/gameplayController.js";
 
 const router = express.Router();
 
-// POST to save gameplay
 router.post("/", saveGameplay);
-
-// GET gameplay by ID
+router.get("/leaderboards", getGameplayLeaderboars);
 router.get("/:id", getGameplayById);
-
-// GET all gameplays by player
 router.get("/player/:username", getGameplaysByPlayer);
-
-// GET all gameplays by level
-router.get("/level/:levelId", getGameplaysByLevel);
 
 export default router;

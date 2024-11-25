@@ -1,0 +1,22 @@
+[
+	{
+		"player": "i_am_the_arm",
+		"blocks": [
+			{
+				"blockId": 1,
+				"jumpsSucceeded": 5,
+				"jumpsFailed": 2,
+				"averagePoseAccuracy": 85
+			},
+			{
+				"blockId": 2,
+				"jumpsSucceeded": 3,
+				"jumpsFailed": 1,
+				"averagePoseAccuracy": 90
+			}
+		],
+		"score": 150,
+		"createdAt": "2023-10-01T12:00:00Z",
+		"updatedAt": "2023-10-01T12:00:00Z"
+	}
+]

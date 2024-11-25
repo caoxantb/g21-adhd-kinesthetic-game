@@ -31,19 +31,19 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "player"],
       default: "player",
     },
-    currentLevel: {
-      type: Number,
-      default: function () {
-        return this.role === "player" ? 1 : null;
-      },
-      min: 1,
-    },
     totalScore: {
       type: Number,
       default: function () {
         return this.role === "player" ? 0 : null;
       },
       min: 0,
+    },
+    gameplaySettings: {
+      type: {
+        numberOfBlocks: { type: Number, min: 2, default: 4 },
+        blockJumpingDurations: { type: [Number], default: [60, 60, 60, 60] },
+        blockPosingDurations: { type: [Number], default: [10, 20, 30, 40] },
+      },
     },
   },
   {

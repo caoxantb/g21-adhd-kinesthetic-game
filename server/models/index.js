@@ -1,6 +1,5 @@
-import Level from "./levelModel.js";
 import Gameplay from "./gameplayModel.js";
 import User from "./userModel.js";
-import Frame from "./frameModel.js";
+import Posture from "./postureModel.js";
 
-export { Level, Gameplay, User, Frame };
+export { Gameplay, User, Posture };

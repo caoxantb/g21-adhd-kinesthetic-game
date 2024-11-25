@@ -11,8 +11,8 @@ const auth = useAuthStore();
 
 const tab = ref(0);
 const leaderboards = ref([]);
-
 const gameplays = ref([]);
+
 
 async function getLeaderboards() {
   try {
@@ -27,7 +27,9 @@ async function getGameplays() {
     const res = await api.get(`gameplays/player/${auth.user.username}`);
     gameplays.value = res;
     console.log("Gameplays: ", gameplays.value);
-  } catch (err) {}
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 function startNewGame() {
@@ -66,10 +68,6 @@ onBeforeMount(async () => {
         </div>
 
         <div class="data-box">
-          <div class="level-box">
-            <div>Level</div>
-            <div class="level">{{ auth.user?.currentLevel }}</div>
-          </div>
 
           <div class="score-box">
             <div>Score</div>
@@ -96,10 +94,7 @@ onBeforeMount(async () => {
           >
             <div class="tab-item-rank">{{ index + 1 }}</div>
             <div class="tab-item-name">{{ leaderboard.name }}</div>
-            <div class="text-sm">Level {{ leaderboard.currentLevel }}</div>
-            <div class="text-lg">
-              <span class="text-sm">Score</span> {{ leaderboard.totalScore }}
-            </div>
+            <div class="text-sm">Score {{ leaderboard.totalScore }}</div>
           </div>
         </div>
 
@@ -108,14 +103,10 @@ onBeforeMount(async () => {
             class="tab-item"
             v-for="(gameplay, index) in gameplays"
             :key="index"
-          >
-            <div>{{ $filters.formatDate(gameplay.updatedAt) }}</div>
-            <div>Level {{ gameplay.level }}</div>
-            <div>Score {{ gameplay.score }}</div>
-            <div>
-              <el-icon class="icon-timer" :size="25"><icon-ep-timer /></el-icon>
-              {{ gameplay.completedTime }}
-            </div>
+          > 
+            <div class="tab-item-rank">{{ index + 1 }}</div>
+            <div class="text-sm">Score {{ gameplay.score }}</div>
+            <div class="text-sm">{{ $filters.formatDate(gameplay.updatedAt) }}</div>
           </div>
         </div>
       </div>
@@ -289,7 +280,4 @@ onBeforeMount(async () => {
   font-size: 16px;
 }
 
-.text-lg {
-  font-size: 23px;
-}
 </style>
