@@ -14,9 +14,7 @@ export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
-      resolvers: [
-        ElementPlusResolver(),
-      ],
+      resolvers: [ElementPlusResolver()],
     }),
     Components({
       resolvers: [
@@ -36,5 +34,8 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
+  },
+  optimizeDeps: {
+    exclude: ["@babylonjs/core", "three.js"],
   },
 });
