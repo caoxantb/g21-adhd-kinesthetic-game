@@ -1,6 +1,6 @@
 <script setup>
 import MainLayout from "@/layouts/MainLayout.vue";
-import { Back, RefreshLeft, Timer } from "@element-plus/icons-vue"
+import { Back, RefreshLeft, Timer } from "@element-plus/icons-vue";
 import { watch, ref } from "vue";
 import { useRouter } from "vue-router";
 
@@ -19,20 +19,19 @@ let p5_canv = null;
 
 let kinectron = null;
 
-watch(skeleton, (newSkeleton) => {
-  if(newSkeleton) {
+watch(skeleton, newSkeleton => {
+  if (newSkeleton) {
     divWidth.value = newSkeleton.offsetWidth;
     divHeight.value = newSkeleton.offsetHeight;
   }
-})
+});
 
 function singlePlayer() {
   router.push("game");
 }
 
 // For setting up the canvas.
-const s = (sketch) => {
-
+const s = sketch => {
   sketch.setup = () => {
     sketch.createCanvas(divWidth.value, divHeight.value);
   };
@@ -47,17 +46,13 @@ const s = (sketch) => {
       divWidth.value = skeleton.value.offsetWidth;
       divHeight.value = skeleton.value.offsetHeight;
       sketch.resizeCanvas(divWidth.value, divHeight.value);
-    }
-    catch (e) {
+    } catch (e) {
       console.log("Not configured", e);
     }
-
-  }
-
+  };
 };
 
 const connectKinect = () => {
-
   // try {
   //   kinectron = Kinectron(kinectAddress);
   //   kinectron.setKinectType("windows");
@@ -69,40 +64,41 @@ const connectKinect = () => {
   //   configured.value = 0;
   // }
 
-  if(configured.value) {
+  if (configured.value) {
     configured.value = 0;
-  }
-  else {
+  } else {
     configured.value = 1;
 
     // Setting the canvas once the kinect has been connected.
     setTimeout(() => {
-    divWidth.value = skeleton.value.offsetWidth;
-    divHeight.value = skeleton.value.offsetHeight;
+      divWidth.value = skeleton.value.offsetWidth;
+      divHeight.value = skeleton.value.offsetHeight;
 
-    if (!p5_canv) {
-      p5_canv = new p5(s, "skeleton");
-    }
-    else {
-      p5_canv.resizeCanvas(divWidth.value, divHeight.value);
-    }
+      if (!p5_canv) {
+        p5_canv = new p5(s, "skeleton");
+      } else {
+        p5_canv.resizeCanvas(divWidth.value, divHeight.value);
+      }
     }, 100);
   }
-
 };
 
 const close = () => {
   router.back();
 };
-
 </script>
-
 
 <template>
   <MainLayout>
     <div class="container">
       <div class="left">
-        <el-link :underline="false" class="back-button" @click="close" :icon="Back">Back</el-link>
+        <el-link
+          :underline="false"
+          class="back-button"
+          @click="close"
+          :icon="Back"
+          >Back</el-link
+        >
         <div class="stats-box" v-if="gameEnded">
           <el-text class="goodgame-text">Good Game!</el-text>
           <span class="minutes-box">
@@ -110,12 +106,19 @@ const close = () => {
             <el-text class="minutes-text">8.03 minutes</el-text>
           </span>
           <span class="resets-box">
-            <el-icon :size="24" style="padding-bottom: 2px"><RefreshLeft /></el-icon>
+            <el-icon :size="24" style="padding-bottom: 2px"
+              ><RefreshLeft
+            /></el-icon>
             <el-text class="resets-text">7 resets</el-text>
           </span>
         </div>
         <div class="buttons-box">
-          <el-button class="single-button" v-bind:disabled="!configured" @click="singlePlayer">Single Player</el-button>
+          <el-button
+            class="single-button"
+            v-bind:disabled="!configured"
+            @click="singlePlayer"
+            >Single Player</el-button
+          >
           <el-button class="multi-button" disabled>Multiplayer</el-button>
         </div>
       </div>
@@ -125,22 +128,26 @@ const close = () => {
           <el-text v-else>Kinect device connected</el-text>
         </div>
         <div class="input-box">
-          <el-input placeholder="Enter kinect IP address" class="configure-input" v-model="kinectAddress" />
-          <el-button class="configure-button" @click="connectKinect">Connect</el-button>
+          <el-input
+            placeholder="Enter kinect IP address"
+            class="configure-input"
+            v-model="kinectAddress"
+          />
+          <el-button class="configure-button" @click="connectKinect"
+            >Connect</el-button
+          >
         </div>
-        <div v-show="configured" id="skeleton" ref="skeleton">
-        </div>
+        <div v-show="configured" id="skeleton" ref="skeleton"></div>
       </div>
     </div>
   </MainLayout>
 </template>
 
 <style scoped>
-
 .el-text {
   font-size: 20px;
   margin-bottom: 5px;
-  color: var(--color-white)
+  color: var(--color-white);
 }
 
 .container {
@@ -185,7 +192,8 @@ const close = () => {
   font-size: 40px;
 }
 
-.minutes-text, .resets-text {
+.minutes-text,
+.resets-text {
   color: var(--color-black);
   display: flex;
   flex-direction: row;
@@ -194,12 +202,12 @@ const close = () => {
   font-size: 17px;
 }
 
-.resets-box, .minutes-box {
+.resets-box,
+.minutes-box {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-
 
 .text-box {
   display: flex;
@@ -241,7 +249,8 @@ const close = () => {
   margin-bottom: 50px;
 }
 
-.single-button, .multi-button {
+.single-button,
+.multi-button {
   height: 95px !important;
   margin-bottom: 20px;
   width: 350px;
@@ -260,13 +269,15 @@ const close = () => {
   --el-button-hover-bg-color: var(--color-light-gray);
 }
 
-.single-button.is-disabled, .single-button.is-disabled:hover  {
+.single-button.is-disabled,
+.single-button.is-disabled:hover {
   background-color: var(--color-red);
   opacity: 0.7;
   color: var(--color-white);
 }
 
-.multi-button.is-disabled, .multi-button.is-disabled:hover {
+.multi-button.is-disabled,
+.multi-button.is-disabled:hover {
   background-color: var(--text-color-tertiary);
   opacity: 0.7;
   color: var(--color-white);
@@ -280,7 +291,7 @@ const close = () => {
   top: 25px;
 }
 
-.el-button+.el-button {
+.el-button + .el-button {
   margin-left: 0px;
 }
 
@@ -292,6 +303,4 @@ const close = () => {
   width: 50%;
   height: 70%;
 }
-
-
 </style>
