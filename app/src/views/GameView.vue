@@ -52,7 +52,7 @@ function jumpDetection(body) {
     basehead = head*height;
   }
 
-  if(neck*height - head*height >= 50 || neck*height - head*height <= 10) {
+  if(neck*height - head*height >= 40 || neck*height - head*height <= 10) {
     console.log("WRONG POSITION!!!!!");
     basehead = null;
     return;

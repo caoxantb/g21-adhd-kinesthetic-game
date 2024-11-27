@@ -82,7 +82,7 @@ export default class ObstacleSystem {
     const size = new THREE.Vector3();
     boundingBox.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z);
-    const desiredSize = 15;
+    const desiredSize = 13;
     const scale = desiredSize / maxDim;
     model.scale.set(scale, scale, scale);
   }
