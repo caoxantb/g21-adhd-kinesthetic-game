@@ -13,8 +13,8 @@ export const useGameStore = defineStore("game", {
     progress: state => (state.timePassed / state.duration) * 100,
   },
   actions: {
-    addCoin() {
-      this.coins++;
+    updateCoins(coins) {
+      this.coins = this.coins + coins;
     },
   },
 });

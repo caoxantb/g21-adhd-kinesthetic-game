@@ -29,10 +29,9 @@ function triggerJump() {
   <div class="right-bar">
     <div class="progress-box">
       <el-progress
-        class="progress"
+        type="circle"
         :percentage="progress"
-        :stroke-width="22"
-        :text-inside="true"
+        :stroke-width="10"
         color="#4e8c40c7"
       >
         <template #default="{ percentage }">
@@ -47,7 +46,7 @@ function triggerJump() {
       <div class="action-number">FAIL: {{ fail }}</div>
     </div>
 
-    <img class="skeleton" :src="skeleton" alt="" />
+    <!-- <img class="skeleton" :src="skeleton" alt="" /> -->
 
     <!-- <el-button size="large" @click="triggerJump">Jump</el-button> -->
   </div>
@@ -66,11 +65,7 @@ function triggerJump() {
 
 .progress-box {
   margin-bottom: 30px;
-}
-
-.progress {
-  border: 7px solid var(--border-color);
-  border-radius: 100px;
+  text-align: right;
 }
 
 .percentage-value {
