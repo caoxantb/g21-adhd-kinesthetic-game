@@ -244,6 +244,10 @@ export default class Game {
   jump() {
     this.player.jump();
   }
+
+  startTPose() {
+    this.player.startPose('tpose');
+  }
   
   handleKeyPress(event) {
     if (event.key === "ArrowUp" && this.currentPhase === "active" && this.player.animationSystem.currentAnimationName === "run") {

@@ -3,6 +3,7 @@ import { ref, onBeforeMount, onMounted, onUnmounted } from "vue";
 import LeftBar from "@/components/LeftBar.vue";
 import RightBar from "@/components/RightBar.vue";
 import Game from "@/game/index.js";
+import { calculateAccuracy, averageAccuracy } from "@/utils/postures";
 import { useGameStore } from "@/stores/game";
 import { useKinectStore } from "@/stores/kinect";
 
@@ -14,8 +15,9 @@ let kinectron = null;
 let game = null;
 
 let basehead = null;
-let jumping = false;
+let isJumping = false;
 const height = 500;
+let postureAccuracies = [];
 
 onBeforeMount(() => {});
 
@@ -41,13 +43,33 @@ function initKinectron() {
   kinectron.makeConnection();
 
   // request all tracked bodies and pass data to your callback
-  kinectron.startTrackedBodies(jumpDetection);
+  kinectron.startTrackedBodies(bodyTracked);
 }
 
-function jumpDetection(body) {
-  var head = body.joints[kinectron.HEAD].depthY;
-  var neck = body.joints[kinectron.NECK].depthY;
+function bodyTracked(body) {
+  if(game.currentPhase === "active") {
+    var head = body.joints[kinectron.HEAD].depthY;
+    var neck = body.joints[kinectron.NECK].depthY;
 
+    jumpDetection(head, neck);
+  }
+  else if(game.currentPhase === "freezing") {
+    if(game.remainingTime > 5) {
+      let accuracy = calculateAccuracy(body, kinect.postures[17]);
+      console.log("Accuracy: ", accuracy);
+      postureAccuracies.push(accuracy);
+    }
+    else if(game.remainingTime === 5) {
+      console.log("Average accuracy: ",averageAccuracy(postureAccuracies));
+      if(averageAccuracy(postureAccuracies) >= 90) {
+        game.startTPose();
+      }
+      postureAccuracies = [];
+    }
+  }
+}
+
+function jumpDetection(head, neck) {
   if(basehead === null) {
     basehead = head*height;
   }
@@ -58,13 +80,13 @@ function jumpDetection(body) {
     return;
   }
 
-  if(!jumping && basehead - head*height >= 50) {
-    jumping = true;
+  if(!isJumping && basehead - head*height >= 50) {
+    isJumping = true;
     console.log("JUMP DETECTED!!!!!");
     game.jump();
   }
-  else if(jumping && basehead - head*height < 50) {
-    jumping = false;
+  else if(isJumping && basehead - head*height < 50) {
+    isJumping = false;
   }
 }
 </script>
