@@ -2,6 +2,10 @@ import * as THREE from "three";
 import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 
 import tposewall from "@/assets/game/models/tposewall.fbx";
+import iposewall from "@/assets/game/models/iposewall.fbx";
+import jposewall from "@/assets/game/models/jposewall.fbx";
+import nposewall from "@/assets/game/models/nposewall.fbx";
+import pposewall from "@/assets/game/models/pposewall.fbx";
 
 export default class WallSystem {
   constructor(scene, game) {
@@ -14,25 +18,48 @@ export default class WallSystem {
     this.hasFreezeTriggered = false;
     this.isActive = false;
     this.wall = null;
+    this.wallModels = [
+      tposewall,
+      iposewall,
+      jposewall,
+      nposewall,
+      pposewall
+      // Add more wall models here.
+    ];
+    this.wallModelPool = new Map();
   }
 
   async init() {
     try {
       const loader = new FBXLoader();
-      const fbx = await loader.loadAsync(tposewall);
-      this.model = fbx;
-      this.model.traverse(child => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
+      for (const modelPath of this.wallModels) {
+        try {
+          const fbx = await loader.loadAsync(modelPath);
+          this.model = fbx;
+          this.model.traverse(child => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          });
+          this.wallModelPool.set(modelPath, this.model);
+        } catch (error) {
+          console.error(`Failed to load model`, error);
         }
-      });
+      }
     } catch (error) {
-      console.error(`Failed to load model`, error);
+      console.error("Error initializing the wall system:", error);
     }
   }
 
   spawnWall() {
+
+    // Randomly select a model
+    const modelPath = this.wallModels[Math.floor(Math.random() * this.wallModels.length)];
+    
+    const obstacleModel = this.wallModelPool.get(modelPath);
+    
+    this.model = obstacleModel.clone();
     this.model.position.set(0, 5.5, this.spawnDistance);
     this.model.scale.set(0.02, 0.02, 0.02);
     this.model.rotation.y = Math.PI / 2;

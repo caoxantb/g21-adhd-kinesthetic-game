@@ -18,7 +18,7 @@ export default class Game {
     this.currentPhaseIndex = 0; // To track the current phase in each block
     this.phases = ["active", "preparation", "freezing", "break"];
     this.phaseDurations = {
-      active: 170, // seconds
+      active: 10, // seconds
       preparation: 10, // seconds
       freezing: 15, // seconds (can be adjusted dynamically)
       break: 20, // seconds
@@ -251,6 +251,56 @@ export default class Game {
       switch(event.key) {
         case 't':
           this.player.startPose('tpose');
+          break;
+        case 'i':
+          this.player.rightArm.rotation.y = Math.PI / 2;
+          this.player.rightArm.rotation.z = -Math.PI / 2;
+          this.player.rightForearm.rotation.y = Math.PI / 2;
+
+          this.player.leftArm.rotation.y = Math.PI / 2;
+          this.player.leftArm.rotation.z = -Math.PI / 2;
+          this.player.leftForearm.rotation.y = Math.PI / 2;
+
+          this.player.rightShoulder.rotation.y = 0;
+          this.player.leftShoulder.rotation.y = 0;
+          break;
+        case 'j':
+          this.player.leftArm.rotation.y = Math.PI / 2;
+          this.player.leftArm.rotation.z = -Math.PI / 2;
+          this.player.leftForearm.rotation.y = Math.PI / 2;
+
+          this.player.rightArm.rotation.y = 0;
+          this.player.rightArm.rotation.z = 0;
+          this.player.rightForearm.rotation.y = 0;
+
+          this.player.rightShoulder.rotation.y = 0;
+          this.player.leftShoulder.rotation.y = 0;
+
+          break;
+        case 'n':
+          this.player.rightShoulder.rotation.y = Math.PI / 4;
+          this.player.leftShoulder.rotation.y = -Math.PI / 4;
+
+          this.player.leftArm.rotation.y = 0;
+          this.player.leftArm.rotation.z = 0;
+          this.player.leftForearm.rotation.y = 0;
+
+          this.player.rightArm.rotation.y = 0;
+          this.player.rightArm.rotation.z = 0;
+          this.player.rightForearm.rotation.y = 0;
+
+          break;
+        case 'p':
+          this.player.rightArm.rotation.y = Math.PI / 2;
+          this.player.rightArm.rotation.z = -Math.PI / 2;
+          this.player.rightForearm.rotation.y = Math.PI / 2;
+
+          this.player.leftArm.rotation.y = 0;
+          this.player.leftArm.rotation.z = 0;
+          this.player.leftForearm.rotation.y = 0;
+
+          this.player.rightShoulder.rotation.y = 0;
+          this.player.leftShoulder.rotation.y = 0;
           break;
         // Add more pose triggers here
       }

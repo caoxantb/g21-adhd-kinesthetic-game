@@ -34,11 +34,29 @@ export default class Player {
 
     this.effects = new EffectsSystem(scene);
 
+    this.leftShoulder = null;
+    this.rightShoulder = null;
+    this.leftArm = null;
+    this.rightArm = null;
+    this.leftForearm = null;
+    this.rightForearm = null;
+    this.leftHand = null;
+    this.rightHand = null;
+
     this.load();
   }
 
   async load() {
     this.player = await new FBXLoader().loadAsync(xbot);
+
+    this.leftShoulder = this.player.children[1].children[0].children[0].children[0].children[1];
+    this.rightShoulder = this.player.children[1].children[0].children[0].children[0].children[2];
+    this.leftArm = this.leftShoulder.children[0];
+    this.rightArm = this.rightShoulder.children[0];
+    this.leftForearm = this.leftArm.children[0];
+    this.rightForearm = this.rightArm.children[0];
+    this.leftHand = this.leftForearm.children[0];
+    this.rightHand = this.rightForearm.children[0];
 
     this.player.position.y = 0;
     this.player.position.z = 68;
