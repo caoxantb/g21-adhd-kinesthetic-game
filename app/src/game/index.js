@@ -241,6 +241,14 @@ export default class Game {
     requestAnimationFrame(() => this.animate());
   }
 
+  jump() {
+    this.player.jump();
+  }
+
+  startTPose() {
+    this.player.startPose('tpose');
+  }
+  
   handleKeyPress(event) {
     if (event.key === "ArrowUp" && this.currentPhase === "active" && this.player.animationSystem.currentAnimationName === "run") {
       this.player.jump();

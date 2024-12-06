@@ -3,6 +3,7 @@ import MainLayout from "@/layouts/MainLayout.vue";
 import { Back, RefreshLeft, Timer } from "@element-plus/icons-vue";
 import { watch, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useKinectStore } from "@/stores/kinect";
 
 const router = useRouter();
 const kinectAddress = ref("");
@@ -16,8 +17,9 @@ const divHeight = ref(0);
 const skeleton = ref(null);
 const gameEnded = ref(0);
 let p5_canv = null;
-
 let kinectron = null;
+
+const kinect = useKinectStore();
 
 watch(skeleton, newSkeleton => {
   if (newSkeleton) {
@@ -53,20 +55,15 @@ const s = sketch => {
 };
 
 const connectKinect = () => {
-  // try {
-  //   kinectron = Kinectron(kinectAddress);
-  //   kinectron.setKinectType("windows");
-  //   kinectron.makeConnection();
-  //   configured.value = 1;
-  // }
-  // catch (e) {
-  //   console.log("Could not connect to kinect", e);
-  //   configured.value = 0;
-  // }
+  // 
 
   if (configured.value) {
     configured.value = 0;
   } else {
+    kinect.getAddress(kinectAddress.value);
+    kinectron = new Kinectron(kinect.address);
+    kinectron.setKinectType("windows");
+    kinectron.makeConnection();
     configured.value = 1;
 
     // Setting the canvas once the kinect has been connected.
@@ -81,6 +78,19 @@ const connectKinect = () => {
       }
     }, 100);
   }
+
+  //if(!configured.value) {
+  //  kinect.getAddress(kinectAddress.value);
+  //  try {
+  //    
+  //    console.log("Connected to kinect!");
+  //    configured.value = 1;
+  //  }
+  //  catch (e) {
+  //    console.log("Could not connect to kinect", e);
+  //    configured.value = 0;
+  //  }
+  //}
 };
 
 const close = () => {
