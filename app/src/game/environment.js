@@ -63,7 +63,7 @@ export default class Environment {
 
     // Update obstacles if environment is fully loaded
     if (this.obstacles) {
-      this.obstacles.update(delta, speed);
+      this.obstacles.update(delta, speed, player);
       this.detectObstacleCollision(player);
     }
   }
@@ -89,6 +89,7 @@ export default class Environment {
         const obstacle = this.obstacles.activeObstacles[i];
 
         if (player.player.userData.obb.intersectsOBB(obstacle.model.userData.obb)) {
+          obstacle.collision = 1;
           console.log("colliding here");
           player.stumble();
         }
