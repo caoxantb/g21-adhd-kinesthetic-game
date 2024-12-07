@@ -73,7 +73,7 @@ function bodyTracked(body) {
       let accuracy = calculateAccuracy(body, kinect.postures[17]);
       console.log("Accuracy: ", accuracy);
       postureAccuracies.push(accuracy);
-    } else if (game.remainingTime === 5) {
+    } else if (game.remainingTime === 5 && !!postureAccuracies.length) {
       let accuracy = averageAccuracy(postureAccuracies);
       console.log("Average accuracy: ", accuracy);
 
