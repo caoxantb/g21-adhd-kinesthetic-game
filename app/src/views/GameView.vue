@@ -2,6 +2,7 @@
 import { ref, onBeforeMount, onMounted, onUnmounted } from "vue";
 import LeftBar from "@/components/LeftBar.vue";
 import RightBar from "@/components/RightBar.vue";
+import GameStatsPopup from "@/components/GameStatsPopup.vue";
 import Game from "@/game/index.js";
 import { calculateAccuracy, averageAccuracy } from "@/utils/postures";
 import { useGameStore } from "@/stores/game";
@@ -21,8 +22,20 @@ let postureAccuracies = [];
 
 onBeforeMount(() => {});
 
+function onJump() {
+  game.player?.jump();
+}
+
+function handleGameComplete() {
+  console.log("Handling game/block completion");
+  store.toggleStats(true);
+}
+
 onMounted(async () => {
   game = new Game(canvas.value);
+  game.on("complete", handleGameComplete);
+  game.on("blockComplete", handleGameComplete);
+  console.log("Event listeners added for complete and blockComplete");
   initKinectron();
 });
 
@@ -30,6 +43,9 @@ onUnmounted(() => {
   if (game) {
     game.destroy();
   }
+  game?.off("complete", handleGameComplete);
+  game?.off("blockComplete", handleGameComplete);
+  console.log("Event listeners removed");
 });
 
 function initKinectron() {
@@ -103,7 +119,18 @@ function jumpDetection(head, neck) {
       :progress="store.accuracy"
       :success="store.success"
       :fail="store.fail"
+      @jump="onJump"
     ></RightBar>
+
+    <GameStatsPopup
+      v-model:visible="store.showStats"
+      :stats="{
+        successRate: store.successRate,
+        failRate: store.failRate,
+        timeLeft: store.timeLeft,
+        coins: store.coins,
+      }"
+    />
   </div>
 </template>
 
