@@ -6,7 +6,7 @@ import { useGameStore } from "@/stores/game";
 import EffectsSystem from "./effects";
 import AnimationSystem from "./animation";
 
-import xbot from "@/assets/game/models/michelle.fbx";
+import xbot from "@/assets/game/models/pinky.fbx";
 
 import jump from "@/assets/game/sounds/jump.wav";
 
@@ -60,7 +60,7 @@ export default class Player {
 
     this.player.position.y = 0;
     this.player.position.z = 68;
-    this.player.scale.set(0.04, 0.04, 0.04);
+    this.player.scale.set(0.045, 0.045, 0.045);
     this.player.rotation.y = 180 * (Math.PI / 180);
 
     const box3 = new THREE.Box3().setFromObject(this.player);

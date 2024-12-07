@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import { OBB } from "three/addons/math/OBB.js";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 import { useGameStore } from "@/stores/game";
 
-import car1 from "@/assets/game/models/car1.glb";
-import car2 from "@/assets/game/models/car2.glb";
+import car1 from "@/assets/game/models/car1.fbx";
+import car2 from "@/assets/game/models/car2.fbx";
+import car3 from "@/assets/game/models/car3.fbx";
 
 export default class ObstacleSystem {
   constructor(scene) {
@@ -15,6 +16,7 @@ export default class ObstacleSystem {
     this.obstacleModels = [
       car1,
       car2,
+      car3
       // Add more obstacle model paths as needed
     ];
     this.modelPool = new Map();
@@ -50,12 +52,12 @@ export default class ObstacleSystem {
 
   async init() {
     try {
-      const loader = new GLTFLoader();
+      const loader = new FBXLoader();
       // Load actual models
       for (const modelPath of this.obstacleModels) {
         try {
-          const gltf = await loader.loadAsync(modelPath);
-          const model = gltf.scene;
+          const fbx = await loader.loadAsync(modelPath);
+          const model = fbx;
           model.traverse(child => {
             if (child.isMesh) {
               child.castShadow = true;
@@ -84,7 +86,7 @@ export default class ObstacleSystem {
     const size = new THREE.Vector3();
     boundingBox.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z);
-    const desiredSize = 13;
+    const desiredSize = 12;
     const scale = desiredSize / maxDim;
     model.scale.set(scale, scale, scale);
   }

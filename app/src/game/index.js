@@ -16,7 +16,7 @@ export default class Game {
     this.currentPhaseIndex = 0; // To track the current phase in each block
     this.phases = ["active", "preparation", "freezing", "break"];
     this.phaseDurations = {
-      active: 10, // seconds
+      active: 170, // seconds
       preparation: 10, // seconds
       freezing: 15, // seconds (can be adjusted dynamically)
       break: 20, // seconds
@@ -207,6 +207,7 @@ export default class Game {
     this.delta = this.clock.getDelta();
     this.environment.freeze();
     this.player.freeze(this.delta);
+    this.player.startPose("tpose")
 
     if (!this.levitationStarted && this.remainingTime <= 3) {
       this.levitationStarted = true;
@@ -281,9 +282,6 @@ export default class Game {
 
     if (this.currentPhase === "freezing") {
       switch (event.key) {
-        case "t":
-          this.player.startPose("tpose");
-          break;
         case 'i':
           this.player.rightArm.rotation.y = Math.PI / 2;
           this.player.rightArm.rotation.z = -Math.PI / 2;

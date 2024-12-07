@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 
-import tposewall from "@/assets/game/models/tposewall.fbx";
+// import tposewall from "@/assets/game/models/tposewall.fbx";
 import iposewall from "@/assets/game/models/iposewall.fbx";
 import jposewall from "@/assets/game/models/jposewall.fbx";
 import nposewall from "@/assets/game/models/nposewall.fbx";
@@ -19,7 +19,7 @@ export default class WallSystem {
     this.isActive = false;
     this.wall = null;
     this.wallModels = [
-      tposewall,
+      // tposewall,
       iposewall,
       jposewall,
       nposewall,
@@ -42,6 +42,7 @@ export default class WallSystem {
               child.receiveShadow = true;
             }
           });
+          this.normalizeModelSize(this.model)
           this.wallModelPool.set(modelPath, this.model);
         } catch (error) {
           console.error(`Failed to load model`, error);
@@ -52,6 +53,16 @@ export default class WallSystem {
     }
   }
 
+  normalizeModelSize(model) {
+    const boundingBox = new THREE.Box3().setFromObject(model);
+    const size = new THREE.Vector3();
+    boundingBox.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const desiredSize = 27;
+    const scale = desiredSize / maxDim;
+    model.scale.set(scale, scale, scale);
+  }
+
   spawnWall() {
 
     // Randomly select a model
@@ -60,8 +71,7 @@ export default class WallSystem {
     const obstacleModel = this.wallModelPool.get(modelPath);
     
     this.model = obstacleModel.clone();
-    this.model.position.set(0, 5.5, this.spawnDistance);
-    this.model.scale.set(0.02, 0.02, 0.02);
+    this.model.position.set(0, 5.7, this.spawnDistance);
     this.model.rotation.y = Math.PI / 2;
     this.scene.add(this.model);
     this.isActive = true;
