@@ -5,7 +5,7 @@ export const useGameStore = defineStore("game", {
     timePassed: 0,
     duration: 900000,
     coins: 0,
-    accuracy: 25,
+    accuracy: 0,
     success: 0,
     fail: 0,
   }),
