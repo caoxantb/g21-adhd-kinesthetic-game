@@ -35,7 +35,7 @@ onUnmounted(() => {
 function initKinectron() {
   // define and create an instance of kinectron
   kinectron = new Kinectron(kinect.address);
-  
+
   // Set kinect type to "azure" or "windows"
   kinectron.setKinectType("windows");
 
@@ -47,21 +47,23 @@ function initKinectron() {
 }
 
 function bodyTracked(body) {
-  if(game.currentPhase === "active") {
+  if (game.currentPhase === "active") {
     var head = body.joints[kinectron.HEAD].depthY;
     var neck = body.joints[kinectron.NECK].depthY;
 
     jumpDetection(head, neck);
-  }
-  else if(game.currentPhase === "freezing") {
-    if(game.remainingTime > 5) {
+  } else if (game.currentPhase === "freezing") {
+    if (game.remainingTime > 5) {
       let accuracy = calculateAccuracy(body, kinect.postures[17]);
       console.log("Accuracy: ", accuracy);
       postureAccuracies.push(accuracy);
-    }
-    else if(game.remainingTime === 5) {
-      console.log("Average accuracy: ",averageAccuracy(postureAccuracies));
-      if(averageAccuracy(postureAccuracies) >= 90) {
+    } else if (game.remainingTime === 5) {
+      let accuracy = averageAccuracy(postureAccuracies);
+      console.log("Average accuracy: ", accuracy);
+
+      store.accuracy = Number(accuracy.toFixed(2));
+
+      if (accuracy >= 90) {
         game.startTPose();
       }
       postureAccuracies = [];
@@ -70,22 +72,24 @@ function bodyTracked(body) {
 }
 
 function jumpDetection(head, neck) {
-  if(basehead === null) {
-    basehead = head*height;
+  if (basehead === null) {
+    basehead = head * height;
   }
 
-  if(neck*height - head*height >= 40 || neck*height - head*height <= 10) {
+  if (
+    neck * height - head * height >= 40 ||
+    neck * height - head * height <= 10
+  ) {
     console.log("WRONG POSITION!!!!!");
     basehead = null;
     return;
   }
 
-  if(!isJumping && basehead - head*height >= 50) {
+  if (!isJumping && basehead - head * height >= 50) {
     isJumping = true;
     console.log("JUMP DETECTED!!!!!");
     game.jump();
-  }
-  else if(isJumping && basehead - head*height < 50) {
+  } else if (isJumping && basehead - head * height < 50) {
     isJumping = false;
   }
 }

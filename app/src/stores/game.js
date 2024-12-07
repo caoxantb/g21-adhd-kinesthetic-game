@@ -5,7 +5,7 @@ export const useGameStore = defineStore("game", {
     timePassed: 0,
     duration: 900000,
     coins: 0,
-    accuracy: 25,
+    accuracy: 0,
     success: 0,
     fail: 0,
   }),
@@ -13,8 +13,8 @@ export const useGameStore = defineStore("game", {
     progress: state => (state.timePassed / state.duration) * 100,
   },
   actions: {
-    addCoin() {
-      this.coins++;
+    updateCoins(coins) {
+      this.coins = Math.max(this.coins + coins, 0);
     },
   },
 });

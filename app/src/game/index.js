@@ -90,17 +90,20 @@ export default class Game {
       } else {
         this.transitionToNextPhase();
       }
+
+      if (this.store.timePassed < this.store.duration) {
+        this.store.timePassed += 1000;
+      }
     }, 1000);
   }
 
   transitionToNextPhase() {
     this.currentPhaseIndex = (this.currentPhaseIndex + 1) % this.phases.length;
     this.currentPhase = this.phases[this.currentPhaseIndex];
-    if (this.currentPhase === 'freezing')
-      this.phaseDurations.freezing += 10
-    
+    if (this.currentPhase === "freezing") this.phaseDurations.freezing += 10;
+
     this.remainingTime = this.phaseDurations[this.currentPhase];
-    console.log(this.remainingTime)
+    console.log(this.remainingTime);
 
     if (this.currentPhaseIndex === 0) {
       // New block begins
@@ -185,7 +188,7 @@ export default class Game {
     this.player.freeze(this.delta);
 
     // Start levitation when 3 seconds remain in freezing phase
-    if (!this.levitationStarted && this.remainingTime <= 3 ) {
+    if (!this.levitationStarted && this.remainingTime <= 3) {
       this.levitationStarted = true;
       this.player.levitate();
     }
@@ -250,21 +253,25 @@ export default class Game {
   }
   
   handleKeyPress(event) {
-    if (event.key === "ArrowUp" && this.currentPhase === "active" && this.player.animationSystem.currentAnimationName === "run") {
+    if (
+      event.key === "ArrowUp" &&
+      this.currentPhase === "active" &&
+      this.player.animationSystem.currentAnimationName === "run"
+    ) {
       this.player.jump();
     }
-    
+
     // For the freezing phase, we can now support multiple poses
     if (this.currentPhase === "freezing") {
-      switch(event.key) {
-        case 't':
-          this.player.startPose('tpose');
+      switch (event.key) {
+        case "t":
+          this.player.startPose("tpose");
           break;
         // Add more pose triggers here
       }
     }
   }
-  
+
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();

@@ -1,11 +1,7 @@
 <script setup>
-import { defineProps, ref, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 
-import clock from "@/assets/icons/clock.png";
 import coin from "@/assets/icons/coin.png";
-import badge1 from "@/assets/icons/badge_1.png";
-import badge2 from "@/assets/icons/badge_2.png";
-import badge3 from "@/assets/icons/badge_3.png";
 
 const props = defineProps({
   progress: {
@@ -36,19 +32,9 @@ const props = defineProps({
     </div>
 
     <div class="data-box">
-      <div class="data-item">
-        <img class="clock" :src="clock" alt="" />
-        15:00
-      </div>
       <div class="data-item coin-item">
         <img class="coin" :src="coin" alt="" />
         <span class="coin-text">{{ coins }}</span>
-      </div>
-
-      <div class="data-item badge-item">
-        <img class="badge" :src="badge1" alt="" />
-        <img class="badge" :src="badge2" alt="" />
-        <img class="badge" :src="badge3" alt="" />
       </div>
     </div>
   </div>
@@ -89,10 +75,12 @@ const props = defineProps({
 
 .divider-25 {
   left: 25%;
+  /* left: 23.8889%; */
 }
 
 .divider-50 {
   left: 50%;
+  /* left: 48.8889%; */
 }
 
 .divider-75 {
@@ -116,8 +104,8 @@ const props = defineProps({
 
 .clock,
 .coin {
-  height: 48px;
-  width: 48px;
+  height: 80px;
+  width: 80px;
 }
 
 .coin {
@@ -127,6 +115,7 @@ const props = defineProps({
 
 .coin-text {
   text-shadow: 1px 3px 5px #888888;
+  font-size: 60px;
 }
 
 .badge-item {
