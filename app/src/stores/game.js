@@ -14,7 +14,7 @@ export const useGameStore = defineStore("game", {
   },
   actions: {
     updateCoins(coins) {
-      this.coins = this.coins + coins;
+      this.coins = Math.max(this.coins + coins, 0);
     },
   },
 });
