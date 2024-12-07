@@ -1,12 +1,14 @@
 import * as THREE from "three";
-import { OBB } from 'three/addons/math/OBB.js';
+import { OBB } from "three/addons/math/OBB.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { useGameStore } from "@/stores/game";
 
 import car1 from "@/assets/game/models/car1.glb";
 import car2 from "@/assets/game/models/car2.glb";
 
 export default class ObstacleSystem {
   constructor(scene) {
+    this.store = new useGameStore();
     this.scene = scene;
     this.obstacles = [];
     this.activeObstacles = [];
@@ -69,7 +71,7 @@ export default class ObstacleSystem {
         }
       }
       this.initializeObstacleTiming();
-      
+
       this.initialized = true;
       this.nextSpawnTime = Date.now(); // Initial spawn delay
     } catch (error) {
@@ -82,7 +84,7 @@ export default class ObstacleSystem {
     const size = new THREE.Vector3();
     boundingBox.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z);
-    const desiredSize = 15;
+    const desiredSize = 13;
     const scale = desiredSize / maxDim;
     model.scale.set(scale, scale, scale);
   }
@@ -99,28 +101,30 @@ export default class ObstacleSystem {
         Math.floor(Math.random() * this.obstacleModels.length)
       ];
     const obstacleModel = this.modelPool.get(modelPath);
-    
+
     const obstacle = obstacleModel.clone();
     obstacle.position.set(0, -1, this.spawnDistance);
-    
+
     // Set the collision box for the obstacle
     const box3 = new THREE.Box3().setFromObject(obstacle);
     obstacle.userData.obb = new OBB().fromBox3(box3);
-    obstacle.userData.obb.halfSize.y = this.obstacleHeightModifier - obstacle.userData.obb.center.y;
+    obstacle.userData.obb.halfSize.y =
+      this.obstacleHeightModifier - obstacle.userData.obb.center.y;
 
     this.scene.add(obstacle);
     this.activeObstacles.push({
       model: obstacle,
       speed: 3,
+      collision: 0,
     });
     this.numberOfCarsSpawned++;
 
     this.lastSpawnTime = currentTime;
     // Set next spawn interval randomly
     this.nextSpawnTime = currentTime + this.carTravelTime - 10;
-	}
+  }
 
-  update(delta, gameSpeed) {
+  update(delta, gameSpeed, player) {
     if (!this.initialized) return;
 
     // Update existing obstacles
@@ -128,6 +132,14 @@ export default class ObstacleSystem {
       const obstacle = this.activeObstacles[i];
       obstacle.model.position.z += gameSpeed * delta * obstacle.speed;
       obstacle.model.userData.obb.center.z = obstacle.model.position.z;
+
+      if (obstacle.model.position.z > player.player.position.z) {
+        if (obstacle.collision === 0) {
+          obstacle.collision = -1;
+          this.store.success++;
+          this.store.updateCoins(10);
+        }
+      }
 
       // Remove if past despawn point
       if (obstacle.model.position.z > this.despawnDistance) {
