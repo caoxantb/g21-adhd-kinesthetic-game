@@ -1,72 +1,47 @@
-import Gameplay from "../models/gameplayModel.js";
-import User from "../models/userModel.js";
+// server/__tests__/gameplayController.test.js
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { saveGameplay, getGameplayLeaderboars } from '../controllers/gameplayController.js';
+import Gameplay from '../models/gameplayModel.js';
+import User from '../models/userModel.js';
 
-import { NotFound, Unauthorized, Forbidden } from "../utils/httpError.js";
-
-export const saveGameplay = async (req, res) => {
-  const { blocks, score } = req.body;
-
-  if (!req.user) {
-    throw new Unauthorized("You must be logged in to save a gameplay.");
-  }
-
-  const user = await User.findOne({ username: req.user.username });
-  user.totalScore += score;
-  await user.save();
-
-  const newGameplay = new Gameplay({
-    blocks,
-    score,
-    player: user.username,
+describe('Gameplay Controller Tests', () => {
+  beforeEach(async () => {
+    await Gameplay.deleteMany({});
+    await User.deleteMany({});
   });
-  const savedGameplay = await newGameplay.save();
 
-  res.status(201).json(savedGameplay);
-};
+  describe('saveGameplay', () => {
+    it('should save gameplay for authenticated user', async () => {
+      // Create test user
+      const user = await User.create({
+        name: 'Test User',
+        username: 'testuser',
+        passwordHash: 'hashedpassword123',
+        role: 'player'
+      });
 
-export const getGameplayLeaderboars = async (req, res) => {
-  const { limit } = req.query;
+      const req = {
+        body: {
+          blocks: [
+            {
+              blockId: 1,
+              jumpsSucceeded: 3,
+              jumpsFailed: 1,
+              averagePoseAccuracy: 85
+            }
+          ],
+          score: 100
+        },
+        user: { username: 'testuser' }
+      };
+      const res = mockResponse();
 
-  const gameplays = await Gameplay.find()
-    .sort({ score: -1, username: 1 })
-    .limit(parseInt(limit) || 10);
+      await saveGameplay(req, res);
 
-  res.status(200).json(gameplays);
-};
-
-export const getGameplayById = async (req, res) => {
-  const user = req.user;
-
-  if (!user) {
-    throw new Unauthorized("You must be logged in to access this data.");
-  }
-
-  const gameplay = await Gameplay.findById(req.params.id);
-
-  if (!gameplay) {
-    throw new NotFound("Gameplay not found");
-  }
-
-  if (user.role !== "admin" && user.username !== gameplay?.player) {
-    throw new Forbidden("You do not have a permission to access this data.");
-  }
-
-  res.status(200).json(gameplay);
-};
-
-export const getGameplaysByPlayer = async (req, res) => {
-  const user = req.user;
-  const { username } = req.params;
-
-  if (!user) {
-    throw new Unauthorized("You must be logged in to access this data.");
-  }
-
-  if (user.role !== "admin" && user.username !== username) {
-    throw new Forbidden("You do not have a permission to access this data.");
-  }
-
-  const gameplays = await Gameplay.find({ player: username });
-
-  res.status(200).json(gameplays);
-};
+      expect(res.status).toHaveBeenCalledWith(201);
+      const savedGameplay = await Gameplay.findOne({ player: 'testuser' });
+      expect(savedGameplay).toBeTruthy();
+      expect(savedGameplay.score).toBe(100);
+    });
+  });
+});
