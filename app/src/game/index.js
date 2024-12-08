@@ -16,7 +16,7 @@ export default class Game {
     this.currentPhaseIndex = 0; // To track the current phase in each block
     this.phases = ["active", "preparation", "freezing", "break"];
     this.phaseDurations = {
-      active: 170, // seconds
+      active: 10, // seconds
       preparation: 10, // seconds
       freezing: 15, // seconds (can be adjusted dynamically)
       break: 20, // seconds

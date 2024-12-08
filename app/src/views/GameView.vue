@@ -133,6 +133,7 @@ function jumpDetection(head, neck) {
       :progress="store.accuracy"
       :success="store.success"
       :fail="store.fail"
+      :isFreezing="game?.currentPhase === 'freezing'"
       @jump="onJump"
     ></RightBar>
 

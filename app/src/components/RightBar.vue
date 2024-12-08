@@ -16,6 +16,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isFreezing: { 
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["jump"]);
@@ -27,7 +31,7 @@ function triggerJump() {
 
 <template>
   <div class="right-bar">
-    <div class="progress-box">
+    <div class="progress-box" v-if="isFreezing">
       <el-progress
         type="circle"
         :percentage="progress"
