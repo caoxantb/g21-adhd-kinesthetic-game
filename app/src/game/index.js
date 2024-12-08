@@ -333,6 +333,10 @@ export default class Game {
           this.player.leftShoulder.rotation.y = 0;
           break;
         // Add more pose triggers here
+        // November 45 45
+        // Papa 90 180
+        // Juliet 180 90
+        // Extra 180 180
       }
     }
   }
