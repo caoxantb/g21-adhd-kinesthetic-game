@@ -1,6 +1,5 @@
 import Gameplay from "../models/gameplayModel.js";
 import User from "../models/userModel.js";
-
 import { NotFound, Unauthorized, Forbidden } from "../utils/httpError.js";
 
 export const saveGameplay = async (req, res) => {
@@ -24,7 +23,7 @@ export const saveGameplay = async (req, res) => {
   res.status(201).json(savedGameplay);
 };
 
-export const getGameplayLeaderboars = async (req, res) => {
+export const getGameplayLeaderboards = async (req, res) => { // Fixed typo here
   const { limit } = req.query;
 
   const gameplays = await Gameplay.find()

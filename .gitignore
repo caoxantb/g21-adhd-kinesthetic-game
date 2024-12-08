@@ -30,3 +30,7 @@ Thumbs.db
 *.swo
 .idea/
 .vscode/
+app/pnpm-lock.yaml
+server/package-lock.json
+
+coverage/

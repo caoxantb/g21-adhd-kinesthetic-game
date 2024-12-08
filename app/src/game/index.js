@@ -1,13 +1,11 @@
+// index.js
 import * as THREE from "three";
 import { useGameStore } from "@/stores/game";
-
 import Environment from "./environment";
 import Player from "./player";
 import WallSystem from "./wall";
-
 import bgm from "@/assets/game/sounds/bgm.mp3";
 
-// active time 170s, preparation time 10s, freezing time 15s - 45s, break time 20s, 4 blocks total 900s
 export default class Game {
   constructor(canvas) {
     this.store = new useGameStore();
@@ -23,13 +21,40 @@ export default class Game {
       freezing: 15, // seconds (can be adjusted dynamically)
       break: 20, // seconds
     };
-
+    this.eventListeners = new Map();
     this.breakPhaseStartTime = 0;
     this.breakResetComplete = false;
     this.currentPhase = this.phases[this.currentPhaseIndex];
-    this.remainingTime = this.phaseDurations[this.currentPhase]; // Duration for the current phase
+    this.remainingTime = this.phaseDurations[this.currentPhase];
     this.levitationStarted = false;
     this.init();
+  }
+
+  on(event, callback) {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
+    }
+    this.eventListeners.get(event).push(callback);
+  }
+
+  off(event, callback) {
+    const listeners = this.eventListeners.get(event);
+    if (listeners) {
+      const index = listeners.indexOf(callback);
+      if (index > -1) listeners.splice(index, 1);
+    }
+  }
+
+  emit(event) {
+    const listeners = this.eventListeners.get(event);
+    if (listeners) {
+      listeners.forEach(callback => callback());
+    }
+  }
+
+  showBlockStats() {
+    console.log("Showing block stats");
+    this.emit("blockComplete");
   }
 
   async init() {
@@ -90,20 +115,22 @@ export default class Game {
       } else {
         this.transitionToNextPhase();
       }
+
+      if (this.store.timePassed < this.store.duration) {
+        this.store.timePassed += 1000;
+      }
     }, 1000);
   }
 
   transitionToNextPhase() {
     this.currentPhaseIndex = (this.currentPhaseIndex + 1) % this.phases.length;
     this.currentPhase = this.phases[this.currentPhaseIndex];
-    if (this.currentPhase === 'freezing')
-      this.phaseDurations.freezing += 10
-    
+    if (this.currentPhase === "freezing") this.phaseDurations.freezing += 10;
+
     this.remainingTime = this.phaseDurations[this.currentPhase];
-    console.log(this.remainingTime)
+    console.log(this.remainingTime);
 
     if (this.currentPhaseIndex === 0) {
-      // New block begins
       this.currentBlock++;
       if (this.currentBlock > 4) {
         this.onGameCompleted();
@@ -112,7 +139,6 @@ export default class Game {
       }
     }
 
-    // Trigger phase-specific logic
     switch (this.currentPhase) {
       case "active":
         this.startActivePhase();
@@ -130,40 +156,20 @@ export default class Game {
   }
 
   setupBlock() {
-    // Custom logic to reset or prepare for a new block
+    // Custom logic for new block
   }
 
   startActivePhase() {
     this.currentPhase = "active";
     this.environment.loadObstacles();
     console.log("active");
-    // Any setup needed for active phase
   }
 
   startFreezingPhase() {
     this.currentPhase = "freezing";
-    this.levitationStarted = false; // Reset the levitation flag
+    this.levitationStarted = false;
     console.log("freezing");
     this.player.beforeFreeze();
-  }
-
-  startPreparationPhase() {
-    console.log("preparing");
-    this.wallSystem.spawnWall();
-    this.currentPhase = "preparation";
-    // Any setup needed for preparation phase
-  }
-
-  startBreakPhase() {
-    this.currentPhase = "break";
-    this.breakPhaseStartTime = Date.now();
-    this.breakResetComplete = false;
-    console.log("break phase started");
-  }
-
-  onGameCompleted() {
-    clearInterval(this.interval);
-    // Logic for completing the game
   }
 
   active() {
@@ -178,37 +184,114 @@ export default class Game {
     this.player.active(this.delta);
     this.wallSystem.update(this.delta, this.speed);
   }
+  startPreparationPhase() {
+    console.log("preparing");
+    this.wallSystem.spawnWall();
+    this.currentPhase = "preparation";
+  }
+
+  startBreakPhase() {
+    this.currentPhase = "break";
+    this.breakPhaseStartTime = Date.now();
+    this.breakResetComplete = false;
+    console.log("break phase started");
+    this.showBlockStats();
+  }
+
+  onGameCompleted() {
+    clearInterval(this.interval);
+    this.emit("complete");
+  }
 
   freeze() {
     this.delta = this.clock.getDelta();
     this.environment.freeze();
     this.player.freeze(this.delta);
 
-    // Start levitation when 3 seconds remain in freezing phase
-    if (!this.levitationStarted && this.remainingTime <= 3 ) {
+    if (!this.levitationStarted && this.remainingTime <= 3) {
       this.levitationStarted = true;
       this.player.levitate();
     }
   }
 
+  animate() {
+    if (this.currentPhase === "active") {
+      this.active();
+    } else if (this.currentPhase === "preparation") {
+      this.prepare();
+    } else if (this.currentPhase === "freezing") {
+      this.freeze();
+    } else {
+      this.break();
+    }
+    this.renderer.render(this.scene, this.camera);
+    requestAnimationFrame(() => this.animate());
+  }
+
+  jump() {
+    this.player.jump();
+  }
+
+  startTPose() {
+    this.player.startPose("tpose");
+  }
+
+  handleKeyPress(event) {
+    if (
+      event.key === "ArrowUp" &&
+      this.currentPhase === "active" &&
+      this.player.animationSystem.currentAnimationName === "run"
+    ) {
+      this.player.jump();
+    }
+
+    // For the freezing phase, we can now support multiple poses
+    if (this.currentPhase === "freezing") {
+      switch (event.key) {
+        case "t":
+          this.player.startPose("tpose");
+          break;
+        // Add more pose triggers here
+      }
+    }
+  }
+
+  onWindowResize() {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  async startAudioContext() {
+    const audioContext = this.sound.context;
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+      this.sound.play();
+    } else {
+      this.sound.play();
+    }
+  }
+
   break() {
     const elapsedTime = Date.now() - this.breakPhaseStartTime;
+    const breakTimeLeft = Math.max(0, Math.ceil((20000 - elapsedTime) / 1000));
 
-    // Wait for 3 seconds before starting reset
-    if (elapsedTime >= 2000 && !this.breakResetComplete) {
+    // Update store with break time
+    this.store.setBreakTime(breakTimeLeft);
+
+    if (elapsedTime >= 19000 && !this.breakResetComplete) {
       this.resetAfterBreak();
       this.breakResetComplete = true;
+      this.store.toggleStats(false);
     }
   }
 
   resetAfterBreak() {
-    // 1. Reset player
     if (this.player) {
-      // Reset position
       this.player.reset({
         x: 0,
         y: 0,
-        z: 68, // Initial z position
+        z: 68,
       });
     }
 
@@ -241,30 +324,20 @@ export default class Game {
     requestAnimationFrame(() => this.animate());
   }
 
-  jump() {
-    this.player.jump();
-  }
-
-  startTPose() {
-    this.player.startPose('tpose');
-  }
-  
   handleKeyPress(event) {
-    if (event.key === "ArrowUp" && this.currentPhase === "active" && this.player.animationSystem.currentAnimationName === "run") {
+    if (event.key === "ArrowUp" && this.currentPhase === "active") {
       this.player.jump();
     }
-    
-    // For the freezing phase, we can now support multiple poses
+
     if (this.currentPhase === "freezing") {
-      switch(event.key) {
-        case 't':
-          this.player.startPose('tpose');
+      switch (event.key) {
+        case "t":
+          this.player.startPose("tpose");
           break;
-        // Add more pose triggers here
       }
     }
   }
-  
+
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();

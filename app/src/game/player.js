@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OBB } from 'three/addons/math/OBB.js';
+import { OBB } from "three/addons/math/OBB.js";
 import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 import { useGameStore } from "@/stores/game";
 
@@ -50,7 +50,8 @@ export default class Player {
     box3.min.x = -1;
     this.player.userData.obb = new OBB().fromBox3(box3);
     this.player.userData.obb.center.z = this.player.position.z;
-    this.player.userData.originalCenter = this.player.userData.obb.center.clone();
+    this.player.userData.originalCenter =
+      this.player.userData.obb.center.clone();
 
     this.scene.add(this.player);
 
@@ -66,19 +67,21 @@ export default class Player {
   }
 
   jump() {
-    this.animationSystem.playAnimation('jump');
+    this.animationSystem.playAnimation("jump");
     this.currentVelocity = 0.35;
     this.isJumping = true;
   }
 
   stumble() {
     if (this.animationSystem.currentAnimationName !== "stumble") {
-      this.animationSystem.playAnimation('stumble');
+      this.animationSystem.playAnimation("stumble");
+      this.store.fail++;
+      this.store.updateCoins(-5);
     }
   }
 
   levitate() {
-    this.animationSystem.startLevitation()
+    this.animationSystem.startLevitation();
   }
 
   startPose(poseName) {
@@ -102,27 +105,26 @@ export default class Player {
         //   bboxMaterial2
         // );
         // bbox2.position.copy(this.player.userData.obb.center);
-		    // this.scene.add(bbox2);
+        // this.scene.add(bbox2);
 
         // setTimeout(() => {
         //   this.scene.remove(bbox2);
         // }, 100);
-
       }
     }
   }
 
   beforeFreeze() {
-    this.animationSystem.playAnimation('stand');
+    this.animationSystem.playAnimation("stand");
   }
 
   freeze(delta) {
     this.animationSystem.update(delta);
     if (this.animationSystem.isLevitating) {
       this.animationSystem.updateLevitation();
-      this.effects.updateEffects('levitating', this.player.position);
-    } else if (this.animationSystem.currentAnimationName === 'tpose') {
-      this.effects.updateEffects('tpose', this.player.position);
+      this.effects.updateEffects("levitating", this.player.position);
+    } else if (this.animationSystem.currentAnimationName === "tpose") {
+      this.effects.updateEffects("tpose", this.player.position);
     }
   }
 
