@@ -23,10 +23,10 @@ export default class WallSystem {
     // Modified wall models to include names
     this.wallModels = [
         // { path: tposewall, name: 'twall' },
-        { path: iposewall, name: 'ipose' },
-        { path: jposewall, name: 'jpose' },
-        { path: nposewall, name: 'npose' },
-        { path: pposewall, name: 'ppose' }
+        { path: iposewall, name: 'Extra' },
+        { path: jposewall, name: 'Juliet' },
+        { path: nposewall, name: 'November' },
+        { path: pposewall, name: 'Papa' }
     ];
     this.wallModelPool = new Map();
   }

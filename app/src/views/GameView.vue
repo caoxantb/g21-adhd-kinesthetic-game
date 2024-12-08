@@ -69,19 +69,32 @@ function bodyTracked(body) {
 
     jumpDetection(head, neck);
   } else if (game.currentPhase === "freezing") {
+    const wallName = game.getCurrentWallName()
     if (game.remainingTime > 5) {
-      let accuracy = calculateAccuracy(body, kinect.postures[17]);
-      console.log("Accuracy: ", accuracy);
-      store.accuracy = Number(accuracy.toFixed(2));
-      postureAccuracies.push(accuracy);
+      let accuracy = calculateAccuracy(body, kinect.getPosture(wallName))
+      store.accuracy = Number(accuracy.toFixed(2))
+      postureAccuracies.push(accuracy)
     } else if (game.remainingTime === 5 && !!postureAccuracies.length) {
       let accuracy = averageAccuracy(postureAccuracies);
       console.log("Average accuracy: ", accuracy);
 
       store.accuracy = Number(accuracy.toFixed(2));
 
-      if (accuracy >= 90) {
-        game.startTPose();
+      if (accuracy >= 85) {
+        switch (wallName) {
+          case 'Extra':
+            game.startPose("ipose")
+            break
+          case 'Juliet':
+            game.startPose('jpose')
+            break
+          case 'November':
+            game.startPose('npose')
+            break
+          case 'Papa':
+            game.startPose('ppose')
+            break
+        }
       }
       postureAccuracies = [];
     }

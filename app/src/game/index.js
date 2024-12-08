@@ -225,8 +225,8 @@ export default class Game {
     this.player.jump();
   }
 
-  startTPose() {
-    this.player.startPose("tpose");
+  startPose(pose) {
+    this.player.startPose(pose);
   }
 
   break() {
