@@ -116,7 +116,54 @@ export default class AnimationSystem {
   }
 
   playAnimation(name, crossFadeDuration = 0.2) {
-    if (!this.animations.has(name)) return;
+    if (!this.animations.has(name)) {
+      if (name === "ipose") {
+        this.player.rightArm.rotation.y = Math.PI / 2;
+        this.player.rightArm.rotation.z = -Math.PI / 2;
+        this.player.rightForearm.rotation.y = Math.PI / 2;
+  
+        this.player.leftArm.rotation.y = Math.PI / 2;
+        this.player.leftArm.rotation.z = -Math.PI / 2;
+        this.player.leftForearm.rotation.y = Math.PI / 2;
+  
+        this.player.rightShoulder.rotation.y = 0;
+        this.player.leftShoulder.rotation.y = 0;
+      } else if (name === "jpose") {
+        this.player.leftArm.rotation.y = Math.PI / 2;
+        this.player.leftArm.rotation.z = -Math.PI / 2;
+        this.player.leftForearm.rotation.y = Math.PI / 2;
+  
+        this.player.rightArm.rotation.y = 0;
+        this.player.rightArm.rotation.z = 0;
+        this.player.rightForearm.rotation.y = 0;
+  
+        this.player.rightShoulder.rotation.y = 0;
+        this.player.leftShoulder.rotation.y = 0;
+      } else if (name === "npose") {
+        this.player.rightShoulder.rotation.y = Math.PI / 4;
+        this.player.leftShoulder.rotation.y = -Math.PI / 4;
+  
+        this.player.leftArm.rotation.y = 0;
+        this.player.leftArm.rotation.z = 0;
+        this.player.leftForearm.rotation.y = 0;
+  
+        this.player.rightArm.rotation.y = 0;
+        this.player.rightArm.rotation.z = 0;
+        this.player.rightForearm.rotation.y = 0;
+      } else if (name === "ppose") {
+        this.player.rightArm.rotation.y = Math.PI / 2;
+        this.player.rightArm.rotation.z = -Math.PI / 2;
+        this.player.rightForearm.rotation.y = Math.PI / 2;
+  
+        this.player.leftArm.rotation.y = 0;
+        this.player.leftArm.rotation.z = 0;
+        this.player.leftForearm.rotation.y = 0;
+  
+        this.player.rightShoulder.rotation.y = 0;
+        this.player.leftShoulder.rotation.y = 0;
+      }
+      return
+    }
 
     const newAnimation = this.animations.get(name);
     const prevAnimation = this.currentAnimation;

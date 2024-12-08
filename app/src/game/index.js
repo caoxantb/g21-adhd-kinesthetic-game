@@ -283,54 +283,16 @@ export default class Game {
     if (this.currentPhase === "freezing") {
       switch (event.key) {
         case 'i':
-          this.player.rightArm.rotation.y = Math.PI / 2;
-          this.player.rightArm.rotation.z = -Math.PI / 2;
-          this.player.rightForearm.rotation.y = Math.PI / 2;
-
-          this.player.leftArm.rotation.y = Math.PI / 2;
-          this.player.leftArm.rotation.z = -Math.PI / 2;
-          this.player.leftForearm.rotation.y = Math.PI / 2;
-
-          this.player.rightShoulder.rotation.y = 0;
-          this.player.leftShoulder.rotation.y = 0;
+          this.player.startPose("ipose")
           break;
         case 'j':
-          this.player.leftArm.rotation.y = Math.PI / 2;
-          this.player.leftArm.rotation.z = -Math.PI / 2;
-          this.player.leftForearm.rotation.y = Math.PI / 2;
-
-          this.player.rightArm.rotation.y = 0;
-          this.player.rightArm.rotation.z = 0;
-          this.player.rightForearm.rotation.y = 0;
-
-          this.player.rightShoulder.rotation.y = 0;
-          this.player.leftShoulder.rotation.y = 0;
-
+          this.player.startPose("jpose")
           break;
         case 'n':
-          this.player.rightShoulder.rotation.y = Math.PI / 4;
-          this.player.leftShoulder.rotation.y = -Math.PI / 4;
-
-          this.player.leftArm.rotation.y = 0;
-          this.player.leftArm.rotation.z = 0;
-          this.player.leftForearm.rotation.y = 0;
-
-          this.player.rightArm.rotation.y = 0;
-          this.player.rightArm.rotation.z = 0;
-          this.player.rightForearm.rotation.y = 0;
-
+          this.player.startPose("npose")
           break;
         case 'p':
-          this.player.rightArm.rotation.y = Math.PI / 2;
-          this.player.rightArm.rotation.z = -Math.PI / 2;
-          this.player.rightForearm.rotation.y = Math.PI / 2;
-
-          this.player.leftArm.rotation.y = 0;
-          this.player.leftArm.rotation.z = 0;
-          this.player.leftForearm.rotation.y = 0;
-
-          this.player.rightShoulder.rotation.y = 0;
-          this.player.leftShoulder.rotation.y = 0;
+          this.player.startPose("ppose")
           break;
         // Add more pose triggers here
       }
