@@ -18,38 +18,44 @@ export default class WallSystem {
     this.hasFreezeTriggered = false;
     this.isActive = false;
     this.wall = null;
+    this.currentWallName = null;
+
+    // Modified wall models to include names
     this.wallModels = [
-      // tposewall,
-      iposewall,
-      jposewall,
-      nposewall,
-      pposewall
-      // Add more wall models here.
+        // { path: tposewall, name: 'twall' },
+        { path: iposewall, name: 'iwall' },
+        { path: jposewall, name: 'jwall' },
+        { path: nposewall, name: 'nwall' },
+        { path: pposewall, name: 'pwall' }
     ];
     this.wallModelPool = new Map();
   }
 
   async init() {
     try {
-      const loader = new FBXLoader();
-      for (const modelPath of this.wallModels) {
-        try {
-          const fbx = await loader.loadAsync(modelPath);
-          this.model = fbx;
-          this.model.traverse(child => {
-            if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
+        const loader = new FBXLoader();
+        for (const modelData of this.wallModels) {
+            try {
+                const fbx = await loader.loadAsync(modelData.path);
+                this.model = fbx;
+                this.model.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                this.normalizeModelSize(this.model);
+                // Store both the model and its name
+                this.wallModelPool.set(modelData.path, {
+                    model: this.model,
+                    name: modelData.name
+                });
+            } catch (error) {
+                console.error(`Failed to load model`, error);
             }
-          });
-          this.normalizeModelSize(this.model)
-          this.wallModelPool.set(modelPath, this.model);
-        } catch (error) {
-          console.error(`Failed to load model`, error);
         }
-      }
     } catch (error) {
-      console.error("Error initializing the wall system:", error);
+        console.error("Error initializing the wall system:", error);
     }
   }
 
@@ -64,13 +70,12 @@ export default class WallSystem {
   }
 
   spawnWall() {
-
     // Randomly select a model
-    const modelPath = this.wallModels[Math.floor(Math.random() * this.wallModels.length)];
+    const modelData = this.wallModels[Math.floor(Math.random() * this.wallModels.length)];
+    const wallData = this.wallModelPool.get(modelData.path);
+    this.model = wallData.model.clone();
+    this.currentWallName = wallData.name;  // Store the current wall name
     
-    const obstacleModel = this.wallModelPool.get(modelPath);
-    
-    this.model = obstacleModel.clone();
     this.model.position.set(0, 5.7, this.spawnDistance);
     this.model.rotation.y = Math.PI / 2;
     this.scene.add(this.model);
@@ -78,29 +83,35 @@ export default class WallSystem {
     this.hasFreezeTriggered = false;
   }
 
-  update(delta, gameSpeed) {
-    if (!this.isActive || !this.model) return;
-    this.model.position.z += gameSpeed * delta;
+  // New function to get the current wall name
+  getCurrentWallName() {
+      return this.currentWallName;
+  }
 
-    // Check distance to player
-    const distanceToPlayer = this.PLAYER_Z_POSITION - this.model.position.z;
-    
-    // If wall reaches trigger distance and hasn't triggered freeze yet
-    if (distanceToPlayer <= this.FREEZE_TRIGGER_DISTANCE && !this.hasFreezeTriggered) {
-        this.hasFreezeTriggered = true;
-        this.isActive = false; // Stop wall movement
-        this.triggerFreeze();
-    }
+  update(delta, gameSpeed) {
+      if (!this.isActive || !this.model) return;
+      this.model.position.z += gameSpeed * delta;
+
+      // Check distance to player
+      const distanceToPlayer = this.playerZPosition - this.model.position.z;
+      
+      // If wall reaches trigger distance and hasn't triggered freeze yet
+      if (distanceToPlayer <= this.freezeTriggerDistance && !this.hasFreezeTriggered) {
+          this.hasFreezeTriggered = true;
+          this.isActive = false; // Stop wall movement
+          this.triggerFreeze();
+      }
   }
 
   triggerFreeze() {
-    // Tell the game to transition to freeze phase
-    if (this.game && typeof this.game.startFreezingPhase === 'function') {
-        this.game.freeze();
-    }
+      // Tell the game to transition to freeze phase
+      if (this.game && typeof this.game.startFreezingPhase === 'function') {
+          this.game.freeze();
+      }
   }
 
   cleanup() {
-    this.scene.remove(this.model);
+      this.scene.remove(this.model);
+      this.currentWallName = null;
   }
 }
