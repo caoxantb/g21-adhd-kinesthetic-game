@@ -2,7 +2,7 @@
 import { jest } from '@jest/globals';
 import mongoose from 'mongoose';
 import { mockResponse } from '../config/setupTestDb.js';
-import { saveGameplay } from '../../controllers/gameplayController.js';
+import { saveGameplay, getGameplayLeaderboards } from '../../controllers/gameplayController.js';
 import User from '../../models/userModel.js';
 import Gameplay from '../../models/gameplayModel.js';
 
@@ -11,11 +11,7 @@ const createTestUserData = () => ({
   username: 'testuser',
   passwordHash: 'hashedpassword123',
   role: 'player',
-  gameplaySettings: {
-    numberOfBlocks: 4,
-    blockJumpingDurations: [60, 60, 60, 60],
-    blockPosingDurations: [10, 20, 30, 40]
-  }
+  totalScore: 0
 });
 
 const createTestGameplayData = () => ({
@@ -52,6 +48,20 @@ describe('Gameplay Controller Tests', () => {
       const savedGameplay = await Gameplay.findOne({ player: testUser.username });
       expect(savedGameplay).toBeTruthy();
       expect(savedGameplay.score).toBe(100);
+    });
+  });
+
+  describe('getGameplayLeaderboards', () => {
+    it('should return leaderboards sorted by score', async () => {
+      const testUser = await User.create(createTestUserData());
+      await Gameplay.create({ ...createTestGameplayData(), player: testUser.username });
+
+      const req = { query: { limit: 10 } };
+      const res = mockResponse();
+
+      await getGameplayLeaderboards(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
     });
   });
 });

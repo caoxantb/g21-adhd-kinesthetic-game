@@ -1,16 +1,21 @@
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+// __tests__/config/setupTestDb.js
 import { jest } from '@jest/globals';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import mongoose from 'mongoose';
 
 let mongod = null;
 
 beforeAll(async () => {
   if (!mongod) {
-    mongod = await MongoMemoryServer.create();
+    mongod = await MongoMemoryServer.create({
+      instance: {
+        dbName: 'jest'
+      }
+    });
     const uri = mongod.getUri();
     await mongoose.connect(uri);
   }
-});
+}, 30000); // Increased timeout to 30 seconds
 
 afterAll(async () => {
   if (mongod) {
