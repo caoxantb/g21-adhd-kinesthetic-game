@@ -80,6 +80,10 @@ function bodyTracked(body) {
 
       store.accuracy = Number(accuracy.toFixed(2));
 
+      // Reward coins based on accuracy
+      let coins = Math.min(Math.floor((accuracy / 100) * 20), 20); // Scale accuracy to a max of 20 coins
+      store.updateCoins(coins);
+
       if (accuracy >= 85) {
         switch (wallName) {
           case 'Extra':
