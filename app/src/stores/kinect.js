@@ -166,6 +166,11 @@ export const useKinectStore = defineStore("kinect", {
         "beta": 90,
         "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Semaphore_Zulu.svg/2560px-Semaphore_Zulu.svg.png",
         "oneSide": true
+      },
+      {
+        "id": "Extra",
+        "alpha": 180,
+        "beta": 180
       }
     ],
   }),
@@ -173,5 +178,8 @@ export const useKinectStore = defineStore("kinect", {
     getAddress(kinectAddress) {
       this.address = kinectAddress;
     },
+    getPosture(id) {
+      return this.postures.find(posture => posture.id === id) || null;
+    }
   },
 });

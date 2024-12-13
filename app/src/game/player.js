@@ -6,7 +6,7 @@ import { useGameStore } from "@/stores/game";
 import EffectsSystem from "./effects";
 import AnimationSystem from "./animation";
 
-import xbot from "@/assets/game/models/michelle.fbx";
+import xbot from "@/assets/game/models/pinky.fbx";
 
 import jump from "@/assets/game/sounds/jump.wav";
 
@@ -34,15 +34,33 @@ export default class Player {
 
     this.effects = new EffectsSystem(scene);
 
+    this.leftShoulder = null;
+    this.rightShoulder = null;
+    this.leftArm = null;
+    this.rightArm = null;
+    this.leftForearm = null;
+    this.rightForearm = null;
+    this.leftHand = null;
+    this.rightHand = null;
+
     this.load();
   }
 
   async load() {
     this.player = await new FBXLoader().loadAsync(xbot);
 
+    this.leftShoulder = this.player.children[1].children[0].children[0].children[0].children[1];
+    this.rightShoulder = this.player.children[1].children[0].children[0].children[0].children[2];
+    this.leftArm = this.leftShoulder.children[0];
+    this.rightArm = this.rightShoulder.children[0];
+    this.leftForearm = this.leftArm.children[0];
+    this.rightForearm = this.rightArm.children[0];
+    this.leftHand = this.leftForearm.children[0];
+    this.rightHand = this.rightForearm.children[0];
+
     this.player.position.y = 0;
     this.player.position.z = 68;
-    this.player.scale.set(0.04, 0.04, 0.04);
+    this.player.scale.set(0.045, 0.045, 0.045);
     this.player.rotation.y = 180 * (Math.PI / 180);
 
     const box3 = new THREE.Box3().setFromObject(this.player);

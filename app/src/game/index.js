@@ -155,6 +155,12 @@ export default class Game {
     }
   }
 
+  getCurrentWallName() {
+    if (this.currentPhase === "freezing") {
+      return this.wallSystem.getCurrentWallName()
+    }
+  }
+
   setupBlock() {
     // Custom logic for new block
   }
@@ -207,6 +213,7 @@ export default class Game {
     this.delta = this.clock.getDelta();
     this.environment.freeze();
     this.player.freeze(this.delta);
+    this.player.startPose("tpose")
 
     if (!this.levitationStarted && this.remainingTime <= 3) {
       this.levitationStarted = true;
@@ -214,62 +221,12 @@ export default class Game {
     }
   }
 
-  animate() {
-    if (this.currentPhase === "active") {
-      this.active();
-    } else if (this.currentPhase === "preparation") {
-      this.prepare();
-    } else if (this.currentPhase === "freezing") {
-      this.freeze();
-    } else {
-      this.break();
-    }
-    this.renderer.render(this.scene, this.camera);
-    requestAnimationFrame(() => this.animate());
-  }
-
   jump() {
     this.player.jump();
   }
 
-  startTPose() {
-    this.player.startPose("tpose");
-  }
-
-  handleKeyPress(event) {
-    if (
-      event.key === "ArrowUp" &&
-      this.currentPhase === "active" &&
-      this.player.animationSystem.currentAnimationName === "run"
-    ) {
-      this.player.jump();
-    }
-
-    // For the freezing phase, we can now support multiple poses
-    if (this.currentPhase === "freezing") {
-      switch (event.key) {
-        case "t":
-          this.player.startPose("tpose");
-          break;
-        // Add more pose triggers here
-      }
-    }
-  }
-
-  onWindowResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  async startAudioContext() {
-    const audioContext = this.sound.context;
-    if (audioContext.state === "suspended") {
-      await audioContext.resume();
-      this.sound.play();
-    } else {
-      this.sound.play();
-    }
+  startPose(pose) {
+    this.player.startPose(pose);
   }
 
   break() {
@@ -331,9 +288,23 @@ export default class Game {
 
     if (this.currentPhase === "freezing") {
       switch (event.key) {
-        case "t":
-          this.player.startPose("tpose");
+        case 'i':
+          this.player.startPose("ipose")
           break;
+        case 'j':
+          this.player.startPose("jpose")
+          break;
+        case 'n':
+          this.player.startPose("npose")
+          break;
+        case 'p':
+          this.player.startPose("ppose")
+          break;
+        // Add more pose triggers here
+        // November 45 45
+        // Papa 90 180
+        // Juliet 180 90
+        // Extra 180 180
       }
     }
   }
