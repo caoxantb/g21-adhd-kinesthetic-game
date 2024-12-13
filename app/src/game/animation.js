@@ -128,7 +128,7 @@ export default class AnimationSystem {
   
         this.player.rightShoulder.rotation.y = 0;
         this.player.leftShoulder.rotation.y = 0;
-      } else if (name === "jpose") {
+      } else if (name === "ppose") {
         this.player.leftArm.rotation.y = Math.PI / 2;
         this.player.leftArm.rotation.z = -Math.PI / 2;
         this.player.leftForearm.rotation.y = Math.PI / 2;
@@ -150,7 +150,7 @@ export default class AnimationSystem {
         this.player.rightArm.rotation.y = 0;
         this.player.rightArm.rotation.z = 0;
         this.player.rightForearm.rotation.y = 0;
-      } else if (name === "ppose") {
+      } else if (name === "jpose") {
         this.player.rightArm.rotation.y = Math.PI / 2;
         this.player.rightArm.rotation.z = -Math.PI / 2;
         this.player.rightForearm.rotation.y = Math.PI / 2;
