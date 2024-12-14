@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import { User } from "../models/index.js";
-import { BadRequest, NotFound } from "../utils/httpError.js";
+import { BadRequest, NotFound, Forbidden } from "../utils/httpError.js";
 
 export const userLogin = async (req, res) => {
   const { username, password } = req.body;
