@@ -43,8 +43,8 @@ Ensure the following are installed:
 In the case that you don't have a Kinect device, please view this slides and
 document to understand how it works:
 
-- https://bitly.cx/g21-adhd-game-slides
-- https://bitly.cx/g21-adhd-game-docs
+- https://tinyurl.com/g21-adhd-game-slides
+- https://tinyurl.com/g21-adhd-game-report
 
 ### Installation
 
